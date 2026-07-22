@@ -49,3 +49,11 @@ After redeploying:
 - Use one shared family code, for example `tymofii-eden`.
 - Keep the Cloud PIN private to adults.
 - If Cloud Sync is not configured, use `Copy Sync Code` or `Download Backup`.
+
+## TODO
+
+- Protect against accidental creation of a new family caused by a mistyped Family Code.
+  Before provisioning a missing family, show the exact normalized code, summarize the
+  local progress that will be uploaded, and require an explicit second confirmation.
+  Provide a copyable saved Family Code so adults do not need to type it again on each
+  device. A missing family must never be created silently or from an empty local state.
