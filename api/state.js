@@ -8,7 +8,7 @@ function json(res, status, body) {
 
 function getConfig() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   const pin = process.env.EDEN_SYNC_PIN;
   if (!url || !key || !pin) return null;
   return {url: url.replace(/\/$/, ""), key, pin};
@@ -27,11 +27,14 @@ function sanitizeStateForStorage(state) {
 }
 
 async function supabaseFetch(config, path, options = {}) {
+  const authHeaders = {apikey: config.key};
+  if (!config.key.startsWith("sb_secret_")) {
+    authHeaders.Authorization = `Bearer ${config.key}`;
+  }
   const response = await fetch(`${config.url}/rest/v1/${path}`, {
     ...options,
     headers: {
-      apikey: config.key,
-      Authorization: `Bearer ${config.key}`,
+      ...authHeaders,
       "Content-Type": "application/json",
       ...(options.headers || {})
     }
@@ -62,7 +65,7 @@ module.exports = async function handler(req, res) {
 
   const config = getConfig();
   if (!config) {
-    json(res, 503, {error: "Cloud sync is not configured. Add SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and EDEN_SYNC_PIN in Vercel."});
+    json(res, 503, {error: "Cloud sync is not configured. Add SUPABASE_URL, SUPABASE_SECRET_KEY and EDEN_SYNC_PIN in Vercel."});
     return;
   }
 
