@@ -866,16 +866,29 @@ function renderFoundation() {
       <div class="quest-title">${f.title}</div>
       <div class="quest-text">${f.text}</div>
       <div class="meta"><span class="tag xp">+${f.xp} XP</span><span class="tag">Badge: ${badgeLabelForCategory(f.cat)}</span></div>
-      <button class="btn small ${done ? "secondary" : ""}" ${done ? "disabled" : ""}>${done ? "Completed" : "Mark Complete"}</button>
+      ${done
+        ? `<div class="row"><button class="btn small secondary" disabled>Completed for ${activeDate()}</button><button class="btn small ghost undo-foundation">Undo</button></div>`
+        : `<button class="btn small complete-foundation">Mark Complete</button>`}
     `;
-    div.querySelector("button").onclick = () => {
-      if (!state.completed.some(c => c.id === f.id && c.date === activeDate())) {
+    if (done) {
+      div.querySelector(".undo-foundation").onclick = () => {
+        if (!confirm(`Undo ${f.title} for ${activeDate()} and remove ${f.xp} XP?`)) return;
+        const completedIndex = state.completed.findIndex(c => c.id === f.id && c.date === activeDate());
+        if (completedIndex >= 0) {
+          state.completed.splice(completedIndex, 1);
+          state.xp = Math.max(0, state.xp - f.xp);
+          delete state.foundationDone[f.id];
+          save(`${f.title} reopened for ${activeDate()}`);
+        }
+      };
+    } else {
+      div.querySelector(".complete-foundation").onclick = () => {
         state.foundationDone[f.id] = true;
         state.xp += f.xp;
         state.completed.push({id:f.id,title:f.title,cat:f.cat,xp:f.xp,date:activeDate()});
         save();
-      }
-    };
+      };
+    }
     box.appendChild(div);
   });
 }
