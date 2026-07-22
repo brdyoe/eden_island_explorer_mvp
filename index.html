@@ -264,6 +264,8 @@
       <h2>Active Quests</h2>
       <div id="activeEmpty" class="inline-note">No active quests yet.</div>
       <div class="quest-grid" id="activeQuests"></div>
+      <button id="addExtraQuestBtn" class="btn secondary" style="margin-top:12px;">Add Extra Quest</button>
+      <p id="extraQuestNote" class="subtle" style="margin-bottom:0;"></p>
     </div>
 
     <div class="card">
@@ -297,14 +299,33 @@
       <label class="option"><input type="checkbox" id="friendMode"> <span><b>A friend is here</b><br><span class="subtle">Include cooperative pool, drawing and social missions.</span></span></label>
       <label class="option"><input type="checkbox" id="photoMode"> <span><b>Photo missions are allowed</b><br><span class="subtle">The adult keeps the phone and helps take the photo.</span></span></label>
 
+      <h3 style="margin-top:18px;">Record progress for</h3>
+      <p class="subtle">Use this when yesterday was not filled in. Switching dates keeps XP and history, but changes which day completions and notes are attached to.</p>
+      <div class="row">
+        <select id="recordDateSelect"></select>
+        <button id="switchRecordDateBtn" class="btn secondary">Use Date</button>
+      </div>
+
       <button id="generateBtn" class="btn" style="margin-top:14px;">Generate Today's Choices</button>
       <button id="resetDayBtn" class="btn ghost" style="margin-top:8px;">Reset Today's Choices</button>
       <button id="startNewDayBtn" class="btn secondary" style="margin-top:8px;">Archive and Start New Day</button>
     </div>
 
     <div class="card">
-      <h3>Sync and Backup</h3>
-      <p class="subtle">This version saves automatically on the current browser. Use a sync code or backup file to move the same quests and progress to another device.</p>
+      <h3>Cloud Sync, Manual Sync and Backup</h3>
+      <p class="subtle">Cloud Sync keeps the same progress on multiple devices after a family code is connected. Manual sync and backup still work without a database.</p>
+      <label><b>Family code</b></label>
+      <input id="familyCodeInput" type="text" placeholder="Example: tymofii-eden">
+      <label style="display:block;margin-top:10px;"><b>Cloud PIN</b></label>
+      <input id="cloudPinInput" type="text" inputmode="numeric" placeholder="Adult PIN configured in Vercel">
+      <div class="row" style="margin-top:8px;">
+        <button id="connectCloudBtn" class="btn">Connect Cloud</button>
+        <button id="loadCloudBtn" class="btn secondary">Load Cloud</button>
+      </div>
+      <button id="saveCloudBtn" class="btn ghost" style="margin-top:8px;">Save to Cloud Now</button>
+      <p id="cloudStatus" class="subtle" style="margin-top:8px;">Cloud is not connected yet.</p>
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">
+      <p class="subtle">Use a sync code or backup file when Cloud Sync is not configured yet.</p>
       <button id="copySyncBtn" class="btn">Copy Sync Code</button>
       <textarea id="syncCodeInput" placeholder="Paste a sync code from another device here..." style="margin-top:10px;min-height:88px;"></textarea>
       <button id="importSyncBtn" class="btn secondary" style="margin-top:8px;">Import Sync Code</button>
@@ -393,6 +414,11 @@
       <div class="badge-grid" id="badgeGrid"></div>
     </div>
     <div class="card">
+      <h3>Level Perks</h3>
+      <p class="subtle">Levels should create choices, not pressure. Use the current level as a reason to offer one small privilege, such as choosing tomorrow's first location, creating one custom quest, or picking one parent challenge.</p>
+      <div id="levelPerks" class="subtle"></div>
+    </div>
+    <div class="card">
       <h3>Quest History</h3>
       <div id="questHistory" class="subtle">No completed quests yet.</div>
     </div>
@@ -423,8 +449,8 @@ const zoneLabels = {
 };
 
 const foundation = [
-  { id: "homework", title: "Morning Learning", text: "Complete one agreed homework, book or thinking task.", xp: 10 },
-  { id: "help_home", title: "10-Minute Home Helper", text: "Choose one useful job and help for ten minutes.", xp: 10 }
+  { id: "homework", title: "Morning Learning", text: "Complete one agreed homework, book or thinking task.", xp: 10, cat: "reading" },
+  { id: "help_home", title: "10-Minute Home Helper", text: "Choose one useful job and help for ten minutes.", xp: 10, cat: "helper" }
 ];
 
 const quests = [
@@ -526,22 +552,43 @@ const badges = [
   {id:"art",name:"Island Artist",icon:"🎨",need:4,description:"Complete 4 drawing or creative quests."},
   {id:"logic",name:"Logic Master",icon:"🧩",need:3,description:"Complete 3 logic quests."},
   {id:"navigator",name:"Map Maker",icon:"🗺️",need:3,description:"Complete 3 map or navigation quests."},
-  {id:"photo",name:"Photo Explorer",icon:"📷",need:3,description:"Complete 3 adult-assisted photo quests."}
+  {id:"photo",name:"Photo Explorer",icon:"📷",need:3,description:"Complete 3 adult-assisted photo quests."},
+  {id:"helper",name:"Home Helper",icon:"✅",need:3,description:"Complete 3 helpful home tasks."}
+];
+
+const levelPerks = [
+  "Ask an adult to choose today's first location.",
+  "Create one custom safe quest with adult approval.",
+  "Pick one quest for an adult to complete.",
+  "Choose one friend-mode or pool mission when it is safe.",
+  "Turn one completed quest into a harder version for bonus XP.",
+  "Choose tomorrow's first badge target.",
+  "Design one new badge idea.",
+  "Pick one route for the next buggy trip.",
+  "Choose the evening family game.",
+  "Create a final Master Explorer challenge."
 ];
 
 const defaultState = () => ({
-  version: 2,
+  version: 3,
   xp: 0,
   foundationDone: {},
   choices: [],
   selected: [],
   picked: [],
+  extraAdded: 0,
   completed: [],
   bonus: null,
   bonusDone: false,
   passport: [],
   feedback: [],
   dayArchive: [],
+  cloud: {
+    familyId: "",
+    pin: "",
+    revision: 0,
+    lastSyncedAt: ""
+  },
   settings: {
     zones: [],
     support: 0,
@@ -556,19 +603,37 @@ let state = normalizeState(JSON.parse(localStorage.getItem("edenExplorerState") 
 function normalizeState(raw) {
   const base = defaultState();
   if (!raw || typeof raw !== "object") return base;
+  const normalizedCompleted = Array.isArray(raw.completed) ? raw.completed.map(item => ({
+    ...item,
+    cat: normalizeCompletedCategory(item)
+  })) : [];
   return {
     ...base,
     ...raw,
+    version: 3,
     settings: {...base.settings, ...(raw.settings || {})},
+    cloud: {...base.cloud, ...(raw.cloud || {})},
+    extraAdded: Number.isFinite(raw.extraAdded) ? raw.extraAdded : 0,
     feedback: Array.isArray(raw.feedback) ? raw.feedback : [],
     dayArchive: Array.isArray(raw.dayArchive) ? raw.dayArchive : [],
     passport: Array.isArray(raw.passport) ? raw.passport : [],
-    completed: Array.isArray(raw.completed) ? raw.completed : [],
+    completed: normalizedCompleted,
     choices: Array.isArray(raw.choices) ? raw.choices : [],
     selected: Array.isArray(raw.selected) ? raw.selected : [],
     picked: Array.isArray(raw.picked) ? raw.picked : []
   };
 }
+
+function normalizeCompletedCategory(item) {
+  if (!item || typeof item !== "object") return "explorer";
+  if (item.id === "homework") return "reading";
+  if (item.id === "help_home") return "helper";
+  if (String(item.id || "").startsWith("bonus_")) return "bonus";
+  const quest = quests.find(q => q.id === item.id);
+  return quest?.cat || item.cat || "explorer";
+}
+
+let cloudSaveTimer = null;
 
 function save(message = "Saved on this device") {
   localStorage.setItem("edenExplorerState", JSON.stringify(state));
@@ -582,10 +647,16 @@ function save(message = "Saved on this device") {
     }, 1600);
   }
   renderAll();
+  queueCloudSave();
 }
 
 function todayKey() { return new Date().toISOString().slice(0,10); }
 function activeDate() { return state.date || todayKey(); }
+function dateWithOffset(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0,10);
+}
 
 function archiveCurrentDay() {
   const existingIndex = state.dayArchive.findIndex(d => d.date === activeDate());
@@ -594,6 +665,8 @@ function archiveCurrentDay() {
     foundationDone: {...state.foundationDone},
     choices: [...state.choices],
     selected: [...state.selected],
+    picked: [...state.picked],
+    extraAdded: state.extraAdded || 0,
     completedQuestIds: state.completed.filter(c => c.date === activeDate()).map(c => c.id),
     bonus: state.bonus,
     bonusDone: state.bonusDone
@@ -609,9 +682,25 @@ function startNewDay() {
   state.choices = [];
   state.selected = [];
   state.picked = [];
+  state.extraAdded = 0;
   state.bonus = null;
   state.bonusDone = false;
   save("New day started and previous day archived");
+}
+
+function switchActiveDate(date) {
+  if (!date || date === activeDate()) return;
+  archiveCurrentDay();
+  const snapshot = state.dayArchive.find(d => d.date === date);
+  state.date = date;
+  state.foundationDone = snapshot?.foundationDone ? {...snapshot.foundationDone} : {};
+  state.choices = snapshot?.choices ? [...snapshot.choices] : [];
+  state.selected = snapshot?.selected ? [...snapshot.selected] : [];
+  state.picked = snapshot?.picked ? [...snapshot.picked] : [];
+  state.extraAdded = snapshot?.extraAdded || 0;
+  state.bonus = snapshot?.bonus || null;
+  state.bonusDone = !!snapshot?.bonusDone;
+  save(`Recording progress for ${date}`);
 }
 
 function restoreSettings() {
@@ -620,6 +709,8 @@ function restoreSettings() {
   document.getElementById("supportLevel").value = String(state.settings.support ?? 0);
   document.getElementById("friendMode").checked = !!state.settings.friend;
   document.getElementById("photoMode").checked = !!state.settings.photo;
+  document.getElementById("familyCodeInput").value = state.cloud?.familyId || "";
+  document.getElementById("cloudPinInput").value = state.cloud?.pin || "";
 }
 
 function readSettings() {
@@ -632,7 +723,7 @@ function readSettings() {
 }
 
 function encodeState() {
-  const payload = JSON.stringify({app:"EdenIslandExplorer",version:2,state});
+  const payload = JSON.stringify({app:"EdenIslandExplorer",version:3,state: stateForExport()});
   return btoa(unescape(encodeURIComponent(payload)));
 }
 
@@ -646,9 +737,9 @@ function decodeState(code) {
 function downloadBackup() {
   const payload = {
     app: "EdenIslandExplorer",
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
-    state
+    state: stateForExport()
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
@@ -712,8 +803,25 @@ const badgeCategoryMap = {
   detective: "logic",
 
   navigator: "navigator",
-  photo: "photo"
+  photo: "photo",
+  helper: "helper"
 };
+
+function badgeForCategory(cat) {
+  const badgeId = badgeCategoryMap[cat];
+  return badges.find(b => b.id === badgeId) || null;
+}
+
+function badgeLabelForCategory(cat) {
+  const badge = badgeForCategory(cat);
+  return badge ? badge.name : "No badge";
+}
+
+function badgeSourceLabels(badgeId) {
+  return Object.entries(badgeCategoryMap)
+    .filter(([, target]) => target === badgeId)
+    .map(([source]) => source);
+}
 
 function categoryCounts() {
   const counts = {};
@@ -741,26 +849,30 @@ function renderHeader() {
   const notice = document.getElementById("oldDayNotice");
   if (activeDate() !== todayKey()) notice.classList.remove("hidden");
   else notice.classList.add("hidden");
+
+  if (state.cloud?.familyId) {
+    setCloudStatus(`Cloud connected: ${state.cloud.familyId}. Revision ${state.cloud.revision || 0}.`);
+  }
 }
 
 function renderFoundation() {
   const box = document.getElementById("foundationTasks");
   box.innerHTML = "";
   foundation.forEach(f => {
-    const done = !!state.foundationDone[f.id] || state.completed.some(c => c.id === f.id && c.date === activeDate());
+    const done = state.completed.some(c => c.id === f.id && c.date === activeDate());
     const div = document.createElement("div");
     div.className = "quest " + (done ? "completed" : "");
     div.innerHTML = `
       <div class="quest-title">${f.title}</div>
       <div class="quest-text">${f.text}</div>
-      <div class="meta"><span class="tag xp">+${f.xp} XP</span></div>
+      <div class="meta"><span class="tag xp">+${f.xp} XP</span><span class="tag">Badge: ${badgeLabelForCategory(f.cat)}</span></div>
       <button class="btn small ${done ? "secondary" : ""}" ${done ? "disabled" : ""}>${done ? "Completed" : "Mark Complete"}</button>
     `;
     div.querySelector("button").onclick = () => {
       if (!state.completed.some(c => c.id === f.id && c.date === activeDate())) {
         state.foundationDone[f.id] = true;
         state.xp += f.xp;
-        state.completed.push({id:f.id,title:f.title,cat:"foundation",xp:f.xp,date:activeDate()});
+        state.completed.push({id:f.id,title:f.title,cat:f.cat,xp:f.xp,date:activeDate()});
         save();
       }
     };
@@ -798,6 +910,7 @@ function renderChoices() {
         <span class="tag">${q.time}</span>
         <span class="tag">${supportLabels[q.support]}</span>
         <span class="tag xp">+${q.xp} XP</span>
+        <span class="tag">Badge: ${badgeLabelForCategory(q.cat)}</span>
       </div>
       <button class="btn small ${selected ? "secondary" : ""}">${selected ? "Selected" : "Choose"}</button>
     `;
@@ -823,7 +936,11 @@ function renderChoices() {
 function renderActive() {
   const box = document.getElementById("activeQuests");
   const empty = document.getElementById("activeEmpty");
+  const extraBtn = document.getElementById("addExtraQuestBtn");
+  const extraNote = document.getElementById("extraQuestNote");
   box.innerHTML = "";
+  extraNote.textContent = `${state.extraAdded || 0} / 2 extra quests added today. Extra quests use the same adult setup and safety filters.`;
+  extraBtn.disabled = !state.selected.length || (state.extraAdded || 0) >= 2;
   if (!state.selected.length) {
     empty.classList.remove("hidden");
     return;
@@ -842,6 +959,7 @@ function renderActive() {
         <span class="tag">${q.time}</span>
         <span class="tag">${supportLabels[q.support]}</span>
         <span class="tag xp">+${q.xp} XP</span>
+        <span class="tag">Badge: ${badgeLabelForCategory(q.cat)}</span>
       </div>
       <button class="btn small ${done ? "secondary" : ""}" ${done ? "disabled" : ""}>${done ? "Completed" : "Adult Confirms Completion"}</button>
     `;
@@ -856,6 +974,49 @@ function renderActive() {
   });
 }
 
+function eligibleQuestsForCurrentSettings() {
+  readSettings();
+  const zones = state.settings.zones;
+  const support = state.settings.support;
+  const friend = state.settings.friend;
+  const photo = state.settings.photo;
+  const selectedIds = new Set(state.selected || []);
+  const completedToday = new Set(state.completed.filter(c => c.date === activeDate()).map(c => c.id));
+
+  return quests.filter(q =>
+    q.zones.some(z => zones.includes(z)) &&
+    q.support <= support &&
+    (!q.friend || friend) &&
+    (!q.photo || photo) &&
+    !selectedIds.has(q.id) &&
+    !completedToday.has(q.id)
+  );
+}
+
+function addExtraQuest() {
+  if (!state.selected.length) {
+    alert("Lock the first quests before adding extras.");
+    return;
+  }
+  if ((state.extraAdded || 0) >= 2) {
+    alert("You can add up to 2 extra quests in one day.");
+    return;
+  }
+  const recentlyCompletedIds = new Set(state.completed.slice(-12).map(c => c.id));
+  const eligible = eligibleQuestsForCurrentSettings().sort((a,b) => {
+    const ap = recentlyCompletedIds.has(a.id) ? 1 : 0;
+    const bp = recentlyCompletedIds.has(b.id) ? 1 : 0;
+    return ap - bp || Math.random() - 0.5;
+  });
+  if (!eligible.length) {
+    alert("No extra quest matches the current setup. Add another location or increase adult availability.");
+    return;
+  }
+  state.selected.push(eligible[0].id);
+  state.extraAdded = (state.extraAdded || 0) + 1;
+  save(`Added extra quest: ${eligible[0].title}`);
+}
+
 function renderBonus() {
   const box = document.getElementById("bonusQuest");
   if (!state.bonus) {
@@ -868,7 +1029,7 @@ function renderBonus() {
   box.innerHTML = `
     <div class="quest-title">${b.title}</div>
     <div class="quest-text">${b.text}</div>
-    <div class="meta"><span class="tag xp">+${b.xp} XP</span><span class="tag">Optional</span></div>
+    <div class="meta"><span class="tag xp">+${b.xp} XP</span><span class="tag">Optional</span><span class="tag">Badge: ${badgeLabelForCategory("bonus")}</span></div>
     <button class="btn small ${state.bonusDone ? "secondary" : ""}" ${state.bonusDone ? "disabled" : ""}>${state.bonusDone ? "Completed" : "Adult Confirms Completion"}</button>
   `;
   box.querySelector("button").onclick = () => {
@@ -894,6 +1055,7 @@ function renderBadges() {
       <div class="icon">${b.icon}</div>
       <b>${b.name}</b>
       <span class="subtle">${b.description}</span>
+      <br><span class="subtle"><b>Counts from:</b> ${badgeSourceLabels(b.id).join(", ")}</span>
       <div class="progress"><div style="width:${Math.min(100,current/b.need*100)}%"></div></div>
       <span class="subtle">${Math.min(current,b.need)} / ${b.need} matching quests</span>
     `;
@@ -908,6 +1070,13 @@ function renderBadges() {
       `<div class="history-item"><b>${c.title}</b><br><span>${c.date} · +${c.xp} XP</span></div>`
     ).join("");
   }
+
+  const level = levelFromXp(state.xp);
+  const perkBox = document.getElementById("levelPerks");
+  perkBox.innerHTML = levelPerks.map((perk, index) => {
+    const unlocked = index < level;
+    return `<div class="history-item" style="${unlocked ? "" : "opacity:.45;"}"><b>Level ${index + 1}: ${levelNames[index]}</b><br><span>${perk}</span></div>`;
+  }).join("");
 }
 
 function renderPassport() {
@@ -924,12 +1093,28 @@ function renderPassport() {
   }
 }
 
+function renderRecordDateOptions() {
+  const select = document.getElementById("recordDateSelect");
+  const current = activeDate();
+  const options = [
+    {value: todayKey(), label: `Today (${todayKey()})`},
+    {value: dateWithOffset(-1), label: `Yesterday (${dateWithOffset(-1)})`}
+  ];
+  if (!options.some(o => o.value === current)) {
+    options.push({value: current, label: `Current open day (${current})`});
+  }
+  select.innerHTML = options.map(o =>
+    `<option value="${o.value}" ${o.value === current ? "selected" : ""}>${o.label}</option>`
+  ).join("");
+}
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
 
 function renderAll() {
   renderHeader();
+  renderRecordDateOptions();
   renderFoundation();
   renderChoices();
   renderActive();
@@ -959,12 +1144,7 @@ document.getElementById("generateBtn").onclick = () => {
     return;
   }
 
-  let eligible = quests.filter(q =>
-    q.zones.some(z => zones.includes(z)) &&
-    q.support <= support &&
-    (!q.friend || friend) &&
-    (!q.photo || photo)
-  );
+  let eligible = eligibleQuestsForCurrentSettings();
 
   const recentlyCompletedIds = new Set(state.completed.slice(-12).map(c => c.id));
   eligible = eligible.sort((a,b) => {
@@ -981,6 +1161,7 @@ document.getElementById("generateBtn").onclick = () => {
   state.picked = [];
   state.choices = eligible.slice(0, Math.min(6, eligible.length)).map(q => q.id);
   state.selected = [];
+  state.extraAdded = 0;
   state.bonus = bonusPool[Math.floor(Math.random() * bonusPool.length)];
   state.bonusDone = false;
   save();
@@ -999,11 +1180,23 @@ document.getElementById("lockChoicesBtn").onclick = () => {
   save();
 };
 
+document.getElementById("addExtraQuestBtn").onclick = addExtraQuest;
+
+document.getElementById("switchRecordDateBtn").onclick = () => {
+  const date = document.getElementById("recordDateSelect").value;
+  if (!date || date === activeDate()) return;
+  if (!confirm(`Switch active recording date to ${date}?`)) return;
+  switchActiveDate(date);
+  restoreSettings();
+  loadFeedbackFields();
+};
+
 document.getElementById("resetDayBtn").onclick = () => {
   if (!confirm("Reset today's generated choices? Completed XP and history will stay.")) return;
   state.choices = [];
   state.selected = [];
   state.picked = [];
+  state.extraAdded = 0;
   state.bonus = null;
   state.bonusDone = false;
   save("Today's choices reset");
@@ -1041,8 +1234,142 @@ document.querySelectorAll(".zone, #supportLevel, #friendMode, #photoMode").forEa
     readSettings();
     localStorage.setItem("edenExplorerState", JSON.stringify(state));
     document.getElementById("saveStatus").textContent = "Settings saved on this device";
+    queueCloudSave();
   });
 });
+
+function setCloudStatus(message) {
+  const el = document.getElementById("cloudStatus");
+  if (el) el.textContent = message;
+}
+
+function normalizedFamilyId() {
+  return document.getElementById("familyCodeInput").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-").slice(0, 64);
+}
+
+function cloudPin() {
+  return document.getElementById("cloudPinInput").value.trim();
+}
+
+function stateForCloud() {
+  return stateForExport();
+}
+
+function stateForExport() {
+  const clean = JSON.parse(JSON.stringify(state));
+  if (clean.cloud) clean.cloud.pin = "";
+  return clean;
+}
+
+function queueCloudSave() {
+  if (!state.cloud?.familyId) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(() => saveToCloud(false), 900);
+}
+
+async function saveToCloud(manual = true) {
+  const familyId = state.cloud?.familyId || normalizedFamilyId();
+  if (!familyId) {
+    if (manual) alert("Enter a family code first.");
+    return;
+  }
+  const pin = state.cloud?.pin || cloudPin();
+  if (!pin) {
+    if (manual) alert("Enter the adult Cloud PIN first.");
+    return;
+  }
+  state.cloud = {...(state.cloud || {}), familyId, pin};
+  setCloudStatus("Saving to cloud...");
+  try {
+    const response = await fetch("/api/state", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "x-eden-pin": pin},
+      body: JSON.stringify({familyId, revision: state.cloud.revision || 0, state: stateForCloud()})
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 409 && data.state) {
+      setCloudStatus("Cloud has newer progress. Load Cloud before saving again.");
+      if (manual && confirm("Cloud has newer progress. Load it now?")) {
+        state = normalizeState(data.state);
+        state.cloud = {...(state.cloud || {}), familyId, pin, revision: data.revision || 0, lastSyncedAt: data.updatedAt || ""};
+        localStorage.setItem("edenExplorerState", JSON.stringify(state));
+        restoreSettings();
+        loadFeedbackFields();
+        renderAll();
+      }
+      return;
+    }
+    if (!response.ok) throw new Error(data.error || "Cloud save failed");
+    state.cloud.revision = data.revision || (state.cloud.revision || 0);
+    state.cloud.lastSyncedAt = data.updatedAt || new Date().toISOString();
+    localStorage.setItem("edenExplorerState", JSON.stringify(state));
+    setCloudStatus(`Cloud saved. Revision ${state.cloud.revision}.`);
+  } catch (error) {
+    setCloudStatus(`Cloud sync unavailable: ${error.message}`);
+    if (manual) alert("Cloud sync is not available yet. Manual sync code and backups still work.");
+  }
+}
+
+async function loadFromCloud() {
+  const familyId = normalizedFamilyId() || state.cloud?.familyId;
+  if (!familyId) {
+    alert("Enter a family code first.");
+    return;
+  }
+  const pin = cloudPin() || state.cloud?.pin;
+  if (!pin) {
+    alert("Enter the adult Cloud PIN first.");
+    return;
+  }
+  setCloudStatus("Loading from cloud...");
+  try {
+    const response = await fetch(`/api/state?familyId=${encodeURIComponent(familyId)}`, {
+      headers: {"x-eden-pin": pin}
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 404) {
+      if (confirm("No cloud progress exists for this family code yet. Save this device to cloud now?")) {
+        state.cloud = {...(state.cloud || {}), familyId, pin, revision: 0};
+        await saveToCloud(true);
+      } else {
+        setCloudStatus("No cloud progress found for this family code.");
+      }
+      return;
+    }
+    if (!response.ok) throw new Error(data.error || "Cloud load failed");
+    if (!confirm("Replace this device with cloud progress?")) return;
+    state = normalizeState(data.state);
+    state.cloud = {...(state.cloud || {}), familyId, pin, revision: data.revision || 0, lastSyncedAt: data.updatedAt || ""};
+    localStorage.setItem("edenExplorerState", JSON.stringify(state));
+    restoreSettings();
+    loadFeedbackFields();
+    renderAll();
+    setCloudStatus(`Cloud loaded. Revision ${state.cloud.revision}.`);
+  } catch (error) {
+    setCloudStatus(`Cloud sync unavailable: ${error.message}`);
+    alert("Cloud sync is not available yet. Manual sync code and backups still work.");
+  }
+}
+
+document.getElementById("connectCloudBtn").onclick = async () => {
+  const familyId = normalizedFamilyId();
+  if (!familyId) {
+    alert("Enter a family code first.");
+    return;
+  }
+  document.getElementById("familyCodeInput").value = familyId;
+  const pin = cloudPin();
+  if (!pin) {
+    alert("Enter the adult Cloud PIN first.");
+    return;
+  }
+  state.cloud = {...(state.cloud || {}), familyId, pin};
+  localStorage.setItem("edenExplorerState", JSON.stringify(state));
+  await loadFromCloud();
+};
+
+document.getElementById("loadCloudBtn").onclick = loadFromCloud;
+document.getElementById("saveCloudBtn").onclick = () => saveToCloud(true);
 
 document.getElementById("copySyncBtn").onclick = async () => {
   const code = encodeState();
