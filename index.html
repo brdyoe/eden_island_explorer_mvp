@@ -315,7 +315,8 @@
       <h3>Cloud Sync, Manual Sync and Backup</h3>
       <p class="subtle">Cloud Sync keeps the same progress on multiple devices after a family code is connected. Manual sync and backup still work without a database.</p>
       <label><b>Family code</b></label>
-      <input id="familyCodeInput" type="text" placeholder="Example: tymofii-eden">
+      <input id="familyCodeInput" type="text" placeholder="Example: tymofii-eden" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <button id="copyFamilyCodeBtn" class="btn ghost" style="margin-top:8px;">Copy Family Code</button>
       <label style="display:block;margin-top:10px;"><b>Cloud PIN</b></label>
       <input id="cloudPinInput" type="text" inputmode="numeric" placeholder="Adult PIN configured in Vercel">
       <div class="row" style="margin-top:8px;">
@@ -527,6 +528,8 @@ const quests = [
   {id:"qh13",title:"Classic Card Lesson",text:"Ask an adult to teach one simple card game, then explain the rules back.",zones:["quiet_home"],support:2,time:"20 min",xp:20,cat:"game"},
   {id:"qh14",title:"Daily Planner",text:"Choose one active task, one quiet task and one helpful task for today.",zones:["quiet_home"],support:0,time:"10 min",xp:10,cat:"planner"},
   {id:"qh15",title:"Draw the Best House",text:"Design your ideal Eden Island house, pool and garden on paper.",zones:["quiet_home"],support:0,time:"25 min",xp:20,cat:"architect"},
+  {id:"qh16",title:"Ultra Rare Pokémon Find",text:"Find one card you already have that is marked ultra rare and show the rarity mark to an adult.",zones:["quiet_home"],support:0,time:"10 min",xp:20,cat:"pokemon_master"},
+  {id:"qh17",title:"Win an UNO Match",text:"Play complete UNO matches with an adult and win fairly. Confirm each win; three wins earn UNO Master.",zones:["quiet_home"],support:2,time:"25 min",xp:20,cat:"uno",repeatable:true,target:3},
 
   // Photo missions usable in several locations
   {id:"ph1",title:"Three Shades of Green",text:"With the adult holding the phone, take photos of three different shades of green.",zones:["home_front","home_visible","park_beach"],support:1,time:"15 min",xp:15,cat:"photo",photo:true},
@@ -553,7 +556,9 @@ const badges = [
   {id:"logic",name:"Logic Master",icon:"🧩",need:3,description:"Complete 3 logic quests."},
   {id:"navigator",name:"Map Maker",icon:"🗺️",need:3,description:"Complete 3 map or navigation quests."},
   {id:"photo",name:"Photo Explorer",icon:"📷",need:3,description:"Complete 3 adult-assisted photo quests."},
-  {id:"helper",name:"Home Helper",icon:"✅",need:3,description:"Complete 3 helpful home tasks."}
+  {id:"helper",name:"Home Helper",icon:"✅",need:3,description:"Complete 3 helpful home tasks."},
+  {id:"pokemon_master",name:"Pokémon Master",icon:"⭐",need:1,description:"Find 1 ultra rare Pokémon card you already have and show it to an adult."},
+  {id:"uno_master",name:"UNO Master",icon:"🃏",need:3,description:"Win 3 complete UNO matches fairly."}
 ];
 
 const levelPerks = [
@@ -595,10 +600,13 @@ const defaultState = () => ({
     friend: false,
     photo: false
   },
-  date: new Date().toISOString().slice(0,10)
+  date: todayKey()
 });
 
 let state = normalizeState(JSON.parse(localStorage.getItem("edenExplorerState") || "null"));
+if (rollStateForwardToToday(state)) {
+  localStorage.setItem("edenExplorerState", JSON.stringify(state));
+}
 
 function normalizeState(raw) {
   const base = defaultState();
@@ -650,41 +658,65 @@ function save(message = "Saved on this device") {
   queueCloudSave();
 }
 
-function todayKey() { return new Date().toISOString().slice(0,10); }
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function todayKey() { return localDateKey(); }
 function activeDate() { return state.date || todayKey(); }
 function dateWithOffset(days) {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0,10);
+  return localDateKey(d);
+}
+
+function archiveStateDay(target) {
+  const date = target.date || todayKey();
+  const existingIndex = target.dayArchive.findIndex(d => d.date === date);
+  const snapshot = {
+    date,
+    foundationDone: {...target.foundationDone},
+    choices: [...target.choices],
+    selected: [...target.selected],
+    picked: [...target.picked],
+    extraAdded: target.extraAdded || 0,
+    completedQuestIds: target.completed.filter(c => c.date === date).map(c => c.id),
+    bonus: target.bonus,
+    bonusDone: target.bonusDone
+  };
+  if (existingIndex >= 0) target.dayArchive[existingIndex] = snapshot;
+  else target.dayArchive.push(snapshot);
+}
+
+function resetStateDay(target, date) {
+  target.date = date;
+  target.foundationDone = {};
+  target.choices = [];
+  target.selected = [];
+  target.picked = [];
+  target.extraAdded = 0;
+  target.bonus = null;
+  target.bonusDone = false;
+}
+
+function rollStateForwardToToday(target) {
+  const today = todayKey();
+  if (!target.date || target.date >= today) return false;
+  archiveStateDay(target);
+  resetStateDay(target, today);
+  return true;
 }
 
 function archiveCurrentDay() {
-  const existingIndex = state.dayArchive.findIndex(d => d.date === activeDate());
-  const snapshot = {
-    date: activeDate(),
-    foundationDone: {...state.foundationDone},
-    choices: [...state.choices],
-    selected: [...state.selected],
-    picked: [...state.picked],
-    extraAdded: state.extraAdded || 0,
-    completedQuestIds: state.completed.filter(c => c.date === activeDate()).map(c => c.id),
-    bonus: state.bonus,
-    bonusDone: state.bonusDone
-  };
-  if (existingIndex >= 0) state.dayArchive[existingIndex] = snapshot;
-  else state.dayArchive.push(snapshot);
+  archiveStateDay(state);
 }
 
 function startNewDay() {
   archiveCurrentDay();
-  state.date = todayKey();
-  state.foundationDone = {};
-  state.choices = [];
-  state.selected = [];
-  state.picked = [];
-  state.extraAdded = 0;
-  state.bonus = null;
-  state.bonusDone = false;
+  resetStateDay(state, todayKey());
   save("New day started and previous day archived");
 }
 
@@ -804,7 +836,9 @@ const badgeCategoryMap = {
 
   navigator: "navigator",
   photo: "photo",
-  helper: "helper"
+  helper: "helper",
+  pokemon_master: "pokemon_master",
+  uno: "uno_master"
 };
 
 function badgeForCategory(cat) {
@@ -961,7 +995,13 @@ function renderActive() {
   empty.classList.add("hidden");
   state.selected.forEach(id => {
     const q = quests.find(x => x.id === id);
-    const done = state.completed.some(c => c.id === id && c.date === activeDate());
+    const totalCompletions = state.completed.filter(c => c.id === id).length;
+    const done = q.repeatable
+      ? totalCompletions >= q.target
+      : state.completed.some(c => c.id === id && c.date === activeDate());
+    const actionLabel = q.repeatable
+      ? (done ? "Completed" : `Adult Confirms Win (${totalCompletions} / ${q.target})`)
+      : (done ? "Completed" : "Adult Confirms Completion");
     const div = document.createElement("div");
     div.className = "quest " + (done ? "completed" : "");
     div.innerHTML = `
@@ -974,7 +1014,7 @@ function renderActive() {
         <span class="tag xp">+${q.xp} XP</span>
         <span class="tag">Badge: ${badgeLabelForCategory(q.cat)}</span>
       </div>
-      <button class="btn small ${done ? "secondary" : ""}" ${done ? "disabled" : ""}>${done ? "Completed" : "Adult Confirms Completion"}</button>
+      <button class="btn small ${done ? "secondary" : ""}" ${done ? "disabled" : ""}>${actionLabel}</button>
     `;
     div.querySelector("button").onclick = () => {
       if (!done) {
@@ -995,6 +1035,10 @@ function eligibleQuestsForCurrentSettings() {
   const photo = state.settings.photo;
   const selectedIds = new Set(state.selected || []);
   const completedToday = new Set(state.completed.filter(c => c.date === activeDate()).map(c => c.id));
+  const completionCounts = state.completed.reduce((counts, item) => {
+    counts[item.id] = (counts[item.id] || 0) + 1;
+    return counts;
+  }, {});
 
   return quests.filter(q =>
     q.zones.some(z => zones.includes(z)) &&
@@ -1002,7 +1046,7 @@ function eligibleQuestsForCurrentSettings() {
     (!q.friend || friend) &&
     (!q.photo || photo) &&
     !selectedIds.has(q.id) &&
-    !completedToday.has(q.id)
+    (!completedToday.has(q.id) || (q.repeatable && (completionCounts[q.id] || 0) < q.target))
   );
 }
 
@@ -1264,6 +1308,52 @@ function cloudPin() {
   return document.getElementById("cloudPinInput").value.trim();
 }
 
+function localProgressSummary() {
+  return `${state.xp} XP, ${state.completed.length} completed quests, ${state.selected.length} active quests, ${state.passport.length} passport entries`;
+}
+
+function hasMeaningfulLocalProgress() {
+  return state.xp > 0 ||
+    state.completed.length > 0 ||
+    state.choices.length > 0 ||
+    state.selected.length > 0 ||
+    state.passport.length > 0 ||
+    state.feedback.length > 0 ||
+    state.dayArchive.length > 0;
+}
+
+async function provisionMissingFamily(familyId, pin) {
+  const summary = localProgressSummary();
+  if (!hasMeaningfulLocalProgress()) {
+    setCloudStatus(`Family "${familyId}" was not found. Nothing was created.`);
+    alert(`No cloud family exists for "${familyId}". This device has no progress to upload, so a new family was not created. Check the Family Code for typing mistakes.`);
+    return;
+  }
+
+  const previousFamilyId = state.cloud?.familyId;
+  const previousFamilyNote = previousFamilyId && previousFamilyId !== familyId
+    ? `\n\nThis device was previously connected to "${previousFamilyId}".`
+    : "";
+  const approved = confirm(
+    `No cloud family exists for "${familyId}".${previousFamilyNote}\n\nThis device contains ${summary}.\n\nCreate this new family and upload this progress?`
+  );
+  if (!approved) {
+    setCloudStatus(`Family "${familyId}" was not found. Nothing was created.`);
+    return;
+  }
+
+  const repeatedCode = prompt(`Type the exact Family Code to confirm creating a new family:\n\n${familyId}`);
+  if (repeatedCode !== familyId) {
+    setCloudStatus("Family creation cancelled because the confirmation code did not match.");
+    alert("Family Code did not match. Nothing was created or uploaded.");
+    return;
+  }
+
+  state.cloud = {...(state.cloud || {}), familyId, pin, revision: 0};
+  localStorage.setItem("edenExplorerState", JSON.stringify(state));
+  await saveToCloud(true);
+}
+
 function stateForCloud() {
   return stateForExport();
 }
@@ -1341,23 +1431,24 @@ async function loadFromCloud() {
     });
     const data = await response.json().catch(() => ({}));
     if (response.status === 404) {
-      if (confirm("No cloud progress exists for this family code yet. Save this device to cloud now?")) {
-        state.cloud = {...(state.cloud || {}), familyId, pin, revision: 0};
-        await saveToCloud(true);
-      } else {
-        setCloudStatus("No cloud progress found for this family code.");
-      }
+      await provisionMissingFamily(familyId, pin);
       return;
     }
     if (!response.ok) throw new Error(data.error || "Cloud load failed");
     if (!confirm("Replace this device with cloud progress?")) return;
     state = normalizeState(data.state);
     state.cloud = {...(state.cloud || {}), familyId, pin, revision: data.revision || 0, lastSyncedAt: data.updatedAt || ""};
+    const advancedToToday = rollStateForwardToToday(state);
     localStorage.setItem("edenExplorerState", JSON.stringify(state));
     restoreSettings();
     loadFeedbackFields();
     renderAll();
-    setCloudStatus(`Cloud loaded. Revision ${state.cloud.revision}.`);
+    if (advancedToToday) {
+      await saveToCloud(false);
+      setCloudStatus(`Cloud loaded and advanced to today. Revision ${state.cloud.revision}.`);
+    } else {
+      setCloudStatus(`Cloud loaded. Revision ${state.cloud.revision}.`);
+    }
   } catch (error) {
     setCloudStatus(`Cloud sync unavailable: ${error.message}`);
     alert("Cloud sync is not available yet. Manual sync code and backups still work.");
@@ -1376,13 +1467,26 @@ document.getElementById("connectCloudBtn").onclick = async () => {
     alert("Enter the adult Cloud PIN first.");
     return;
   }
-  state.cloud = {...(state.cloud || {}), familyId, pin};
-  localStorage.setItem("edenExplorerState", JSON.stringify(state));
   await loadFromCloud();
 };
 
 document.getElementById("loadCloudBtn").onclick = loadFromCloud;
 document.getElementById("saveCloudBtn").onclick = () => saveToCloud(true);
+document.getElementById("copyFamilyCodeBtn").onclick = async () => {
+  const familyId = state.cloud?.familyId || normalizedFamilyId();
+  if (!familyId) {
+    alert("Connect or enter a Family Code first.");
+    return;
+  }
+  document.getElementById("familyCodeInput").value = familyId;
+  try {
+    await navigator.clipboard.writeText(familyId);
+    alert(`Family Code copied: ${familyId}`);
+  } catch {
+    document.getElementById("familyCodeInput").select();
+    alert("Family Code selected. Copy it manually.");
+  }
+};
 
 document.getElementById("copySyncBtn").onclick = async () => {
   const code = encodeState();
