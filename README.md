@@ -50,10 +50,10 @@ After redeploying:
 - Keep the Cloud PIN private to adults.
 - If Cloud Sync is not configured, use `Copy Sync Code` or `Download Backup`.
 
-## TODO
+## Cloud Sync Safeguards
 
-- Protect against accidental creation of a new family caused by a mistyped Family Code.
-  Before provisioning a missing family, show the exact normalized code, summarize the
-  local progress that will be uploaded, and require an explicit second confirmation.
-  Provide a copyable saved Family Code so adults do not need to type it again on each
-  device. A missing family must never be created silently or from an empty local state.
+- A missing Family Code is never created silently or from an empty device.
+- Creating a new family shows the normalized code and local progress summary, then
+  requires the exact Family Code to be typed again.
+- A connected Family Code can be copied instead of manually retyped on another device.
+- Loading an older cloud state archives its open day and starts today automatically.
