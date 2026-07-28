@@ -1,57 +1,1759 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Eden Island Explorer Academy</title>
-  <style>
-    html, body { margin: 0; min-height: 100%; background: #f5f7f3; }
-    #bootStatus { max-width: 760px; margin: 30px auto; padding: 18px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #17211b; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Eden Island Explorer Academy</title>
+<style>
+  :root {
+    --bg: #f5f7f3;
+    --card: #ffffff;
+    --text: #17211b;
+    --muted: #68736d;
+    --line: #dfe6e1;
+    --accent: #2e6d50;
+    --accent2: #e7f1eb;
+    --warning: #fff4d8;
+    --danger: #ffe8e5;
+    --shadow: 0 8px 24px rgba(25, 52, 38, 0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .app {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 18px 14px 42px;
+  }
+  header {
+    background: linear-gradient(135deg, #285f47, #438463);
+    color: white;
+    border-radius: 22px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+  header h1 { margin: 0 0 6px; font-size: 26px; line-height: 1.15; }
+  header p { margin: 0; opacity: .9; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .stat {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 14px;
+    padding: 10px;
+    text-align: center;
+  }
+  .stat b { display: block; font-size: 18px; }
+  .stat span { font-size: 12px; opacity: .9; }
+  nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+  nav button {
+    border: 0;
+    background: var(--card);
+    color: var(--muted);
+    padding: 10px 6px;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: 0 2px 10px rgba(25,52,38,.05);
+  }
+  nav button.active { background: var(--accent); color: white; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 17px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,0,0,.02);
+  }
+  .card h2, .card h3 { margin-top: 0; }
+  .subtle { color: var(--muted); font-size: 14px; line-height: 1.45; }
+  .safety {
+    background: var(--warning);
+    border: 1px solid #efd998;
+    border-radius: 14px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+  .danger {
+    background: var(--danger);
+    border: 1px solid #efbbb3;
+  }
+  label.option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin: 8px 0;
+    background: #fff;
+  }
+  label.option input { margin-top: 3px; transform: scale(1.2); }
+  select, textarea, input[type="text"] {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 16px;
+    background: white;
+    color: var(--text);
+  }
+  textarea { min-height: 110px; resize: vertical; }
+  .btn {
+    border: 0;
+    background: var(--accent);
+    color: white;
+    padding: 13px 16px;
+    border-radius: 13px;
+    font-weight: 800;
+    font-size: 15px;
+    width: 100%;
+    cursor: pointer;
+  }
+  .btn.secondary {
+    background: var(--accent2);
+    color: var(--accent);
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .btn.small {
+    width: auto;
+    padding: 9px 12px;
+    font-size: 13px;
+  }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .quest-grid { display: grid; gap: 10px; }
+  .quest {
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    padding: 14px;
+    background: white;
+  }
+  .quest.selected { border: 2px solid var(--accent); background: var(--accent2); }
+  .quest.completed { opacity: .66; }
+  .quest-title {
+    font-weight: 850;
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+  .quest-text { line-height: 1.4; margin-bottom: 10px; }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .tag {
+    font-size: 12px;
+    font-weight: 700;
+    color: #425047;
+    background: #edf1ee;
+    padding: 5px 8px;
+    border-radius: 999px;
+  }
+  .tag.xp { background: #e4f3e9; color: #245a3f; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > * { flex: 1; }
+  .progress {
+    background: #e9eeeb;
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 10px 0 4px;
+  }
+  .progress > div { background: var(--accent); height: 100%; }
+  .badge-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .badge {
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    padding: 14px;
+    text-align: center;
+    background: white;
+  }
+  .badge.locked { opacity: .4; filter: grayscale(1); }
+  .badge .icon { font-size: 32px; margin-bottom: 6px; }
+  .badge b { display: block; }
+  .history-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .history-item:last-child { border-bottom: 0; }
+  .inline-note {
+    padding: 10px;
+    background: #eef5f0;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .hidden { display: none !important; }
+  @media (max-width: 480px) {
+    header h1 { font-size: 23px; }
+    .badge-grid { grid-template-columns: 1fr 1fr; }
+    nav button { font-size: 12px; }
+  }
+</style>
 </head>
 <body>
-  <div id="bootStatus">Loading Eden Island Explorer…</div>
-  <script>
-    (async () => {
-      try {
-        const [baseResponse, packResponse] = await Promise.all([
-          fetch('/index.html?base=20260728-3', {cache: 'no-store'}),
-          fetch('/content-update.js?pack=20260728-3', {cache: 'no-store'})
-        ]);
-        if (!baseResponse.ok) throw new Error(`Base app returned ${baseResponse.status}`);
-        if (!packResponse.ok) throw new Error(`Content pack returned ${packResponse.status}`);
+<div class="app">
+  <header>
+    <h1>Eden Island Explorer Academy</h1>
+    <p>Tymofii's daily island adventure</p>
+    <p id="activeDateLabel" style="margin-top:7px;font-size:13px;opacity:.9;"></p>
+    <p id="saveStatus" style="margin-top:3px;font-size:12px;opacity:.82;">Saved on this device</p>
+    <div class="stats">
+      <div class="stat"><b id="xpValue">0</b><span>Total XP</span></div>
+      <div class="stat"><b id="levelValue">1</b><span>Level</span></div>
+      <div class="stat"><b id="badgeValue">0</b><span>Badges</span></div>
+    </div>
+  </header>
 
-        let html = await baseResponse.text();
-        const packSource = (await packResponse.text()).replace(/<\/script/gi, '<\\/script');
-        const verificationSource = `
-          try {
-            const cartographer = badges.find(b => b.id === 'navigator');
-            const collector = badges.find(b => b.id === 'pokemon_master');
-            const loaded = cartographer?.name === 'Cartographer' && collector?.name === 'Pokémon Collector';
-            document.documentElement.dataset.contentPack = loaded ? 'v2' : 'failed';
-            if (!loaded) {
-              const note = document.createElement('div');
-              note.className = 'safety danger';
-              note.style.margin = '12px 14px';
-              note.innerHTML = '<b>Content update did not load.</b> Cartographer or Pokémon Collector is missing.';
-              document.body.prepend(note);
-            }
-          } catch (error) {
-            console.error('Content pack verification failed', error);
-          }
-        `;
-        const inlinePack = `<script id="contentPackV2">${packSource}<\/script><script>${verificationSource}<\/script>`;
+  <nav>
+    <button class="tab active" data-target="today">Today</button>
+    <button class="tab" data-target="setup">Adult Setup</button>
+    <button class="tab" data-target="passport">Passport</button>
+    <button class="tab" data-target="badges">Badges</button>
+  </nav>
 
-        if (!html.includes('</body>')) throw new Error('Base app HTML has no closing body tag');
-        html = html.replace('</body>', `${inlinePack}</body>`);
-        document.open();
-        document.write(html);
-        document.close();
-      } catch (error) {
-        document.getElementById('bootStatus').innerHTML = `<b>App failed to start.</b><br>${String(error.message || error)}`;
-        console.error(error);
+  <section id="today" class="panel active">
+    <div id="oldDayNotice" class="safety hidden">
+      <b>This adventure is still open from an earlier date.</b> Finish it or use <b>Start New Day</b> in Adult Setup. Nothing will be deleted automatically.
+    </div>
+    <div class="safety danger">
+      <b>Safety rule:</b> no pool, sea, beach, marina or buggy activity without an adult. The phone stays with the adult and is used only for a specific photo mission.
+    </div>
+
+    <div class="card">
+      <h2>Daily Foundation</h2>
+      <p class="subtle">These are small habits, not punishment. Complete only what is relevant today.</p>
+      <div class="quest-grid" id="foundationTasks"></div>
+    </div>
+
+    <div class="card">
+      <h2>Today's Quest Choices</h2>
+      <p class="subtle">Choose up to 3 missions. The adult prepares the list, then keeps the phone.</p>
+      <div id="noQuests" class="inline-note">Open <b>Adult Setup</b>, select today's conditions, then generate missions.</div>
+      <div class="quest-grid" id="questChoices"></div>
+      <button id="lockChoicesBtn" class="btn hidden" style="margin-top:12px;">Lock Selected Quests</button>
+    </div>
+
+    <div class="card">
+      <h2>Active Quests</h2>
+      <div id="activeEmpty" class="inline-note">No active quests yet.</div>
+      <div class="quest-grid" id="activeQuests"></div>
+      <button id="addExtraQuestBtn" class="btn secondary" style="margin-top:12px;">Add Extra Quest</button>
+      <p id="extraQuestNote" class="subtle" style="margin-bottom:0;"></p>
+    </div>
+
+    <div class="card">
+      <h2>Bonus Quest</h2>
+      <div id="bonusQuest" class="inline-note">Generate today's missions to receive a bonus quest.</div>
+    </div>
+  </section>
+
+  <section id="setup" class="panel">
+    <div class="card">
+      <h2>Adult Setup</h2>
+      <p class="subtle">Choose only what is genuinely available today. Pool and water tasks always require active adult supervision.</p>
+
+      <h3>Available locations</h3>
+      <label class="option"><input type="checkbox" value="home_front" class="zone"> <span><b>Home Front Zone</b><br><span class="subtle">The agreed area outside the main entrance, near neighbouring homes.</span></span></label>
+      <label class="option"><input type="checkbox" value="home_visible" class="zone"> <span><b>Visible Home Zone</b><br><span class="subtle">Near the house, garden and water side, always within adult sight.</span></span></label>
+      <label class="option"><input type="checkbox" value="home_pool" class="zone"> <span><b>Home Pool</b><br><span class="subtle">Adult actively watches the whole time.</span></span></label>
+      <label class="option"><input type="checkbox" value="park_beach" class="zone"> <span><b>Park and Nearby Beach</b><br><span class="subtle">Buggy trip with an adult. Children may or may not be there.</span></span></label>
+      <label class="option"><input type="checkbox" value="public_pool" class="zone"> <span><b>Public Pool</b><br><span class="subtle">Adult actively watches the whole time.</span></span></label>
+      <label class="option"><input type="checkbox" value="quiet_home" class="zone"> <span><b>Quiet Time at Home</b><br><span class="subtle">Paper, Sudoku, books, UNO, cards and Pokémon sorting.</span></span></label>
+
+      <h3 style="margin-top:18px;">Adult availability</h3>
+      <select id="supportLevel">
+        <option value="0">Adult is busy: launch and check only</option>
+        <option value="1">Adult can help for about 5 minutes</option>
+        <option value="2">Adult can join for 10-20 minutes</option>
+        <option value="3">Adult can fully supervise an outing or water activity</option>
+      </select>
+
+      <h3 style="margin-top:18px;">Extra options</h3>
+      <label class="option"><input type="checkbox" id="friendMode"> <span><b>A friend is here</b><br><span class="subtle">Include cooperative pool, drawing and social missions.</span></span></label>
+      <label class="option"><input type="checkbox" id="photoMode"> <span><b>Photo missions are allowed</b><br><span class="subtle">The adult keeps the phone and helps take the photo.</span></span></label>
+
+      <h3 style="margin-top:18px;">Record progress for</h3>
+      <p class="subtle">Use this when yesterday was not filled in. Switching dates keeps XP and history, but changes which day completions and notes are attached to.</p>
+      <div class="row">
+        <select id="recordDateSelect"></select>
+        <button id="switchRecordDateBtn" class="btn secondary">Use Date</button>
+      </div>
+
+      <button id="generateBtn" class="btn" style="margin-top:14px;">Generate Today's Choices</button>
+      <button id="resetDayBtn" class="btn ghost" style="margin-top:8px;">Reset Today's Choices</button>
+      <button id="startNewDayBtn" class="btn secondary" style="margin-top:8px;">Archive and Start New Day</button>
+    </div>
+
+    <div class="card">
+      <h3>Cloud Sync, Manual Sync and Backup</h3>
+      <p class="subtle">Cloud Sync keeps the same progress on multiple devices after a family code is connected. Manual sync and backup still work without a database.</p>
+      <label><b>Family code</b></label>
+      <input id="familyCodeInput" type="text" placeholder="Example: tymofii-eden" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <button id="copyFamilyCodeBtn" class="btn ghost" style="margin-top:8px;">Copy Family Code</button>
+      <label style="display:block;margin-top:10px;"><b>Cloud PIN</b></label>
+      <input id="cloudPinInput" type="text" inputmode="numeric" placeholder="Adult PIN configured in Vercel">
+      <div class="row" style="margin-top:8px;">
+        <button id="connectCloudBtn" class="btn">Connect Cloud</button>
+        <button id="loadCloudBtn" class="btn secondary">Load Cloud</button>
+      </div>
+      <button id="saveCloudBtn" class="btn ghost" style="margin-top:8px;">Save to Cloud Now</button>
+      <p id="cloudStatus" class="subtle" style="margin-top:8px;">Cloud is not connected yet.</p>
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">
+      <p class="subtle">Use a sync code or backup file when Cloud Sync is not configured yet.</p>
+      <button id="copySyncBtn" class="btn">Copy Sync Code</button>
+      <textarea id="syncCodeInput" placeholder="Paste a sync code from another device here..." style="margin-top:10px;min-height:88px;"></textarea>
+      <button id="importSyncBtn" class="btn secondary" style="margin-top:8px;">Import Sync Code</button>
+      <div class="row" style="margin-top:8px;">
+        <button id="downloadBackupBtn" class="btn ghost">Download Backup</button>
+        <label class="btn ghost" style="text-align:center;cursor:pointer;">
+          Import Backup
+          <input id="importBackupInput" type="file" accept=".json,application/json" style="display:none;">
+        </label>
+      </div>
+      <p class="subtle" style="margin-bottom:0;">Important: importing replaces the state on this device. Create a backup first when needed.</p>
+    </div>
+
+    <div class="card">
+      <h3>Adult Test Notes</h3>
+      <p class="subtle">Save a quick record after today's test. It is included in backups and sync codes.</p>
+
+      <label><b>Did he start without repeated prompting?</b></label>
+      <select id="feedbackStart">
+        <option value="">Choose...</option>
+        <option value="yes">Yes</option>
+        <option value="partly">Partly</option>
+        <option value="no">No</option>
+      </select>
+
+      <label style="display:block;margin-top:12px;"><b>Adult time used</b></label>
+      <select id="feedbackAdultTime">
+        <option value="">Choose...</option>
+        <option value="under5">Under 5 minutes</option>
+        <option value="5to15">5-15 minutes</option>
+        <option value="15to30">15-30 minutes</option>
+        <option value="over30">Over 30 minutes</option>
+      </select>
+
+      <label style="display:block;margin-top:12px;"><b>Phone requests</b></label>
+      <select id="feedbackPhone">
+        <option value="">Choose...</option>
+        <option value="none">None</option>
+        <option value="once">Once</option>
+        <option value="repeated">Repeatedly</option>
+      </select>
+
+      <label style="display:block;margin-top:12px;"><b>Favourite or most engaging mission</b></label>
+      <input id="feedbackFavourite" type="text" placeholder="Mission name or short note">
+
+      <label style="display:block;margin-top:12px;"><b>What did not work or was unclear?</b></label>
+      <textarea id="feedbackIssue" placeholder="Short practical note..."></textarea>
+
+      <button id="saveFeedbackBtn" class="btn" style="margin-top:10px;">Save Test Notes</button>
+      <button id="copySummaryBtn" class="btn secondary" style="margin-top:8px;">Copy Today's Summary</button>
+    </div>
+
+    <div class="card">
+      <h3>How the adult should use the game</h3>
+      <ol class="subtle">
+        <li>Select real conditions for today.</li>
+        <li>Generate six choices.</li>
+        <li>Let Tymofii choose up to three.</li>
+        <li>Read or show the mission, then keep the phone.</li>
+        <li>Confirm completion later. Do not give XP automatically.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="passport" class="panel">
+    <div class="card">
+      <h2>Explorer Passport</h2>
+      <label><b>Today I discovered...</b></label>
+      <textarea id="discoveryText" placeholder="A new animal, plant, place, game, idea or person..."></textarea>
+      <label style="display:block;margin-top:12px;"><b>My favourite moment...</b></label>
+      <textarea id="favouriteText" placeholder="What was the best part of today?"></textarea>
+      <label style="display:block;margin-top:12px;"><b>One thing I want to try tomorrow...</b></label>
+      <textarea id="tomorrowText" placeholder="A new mission, place or game..."></textarea>
+      <button id="savePassportBtn" class="btn" style="margin-top:12px;">Save Today's Passport</button>
+    </div>
+    <div class="card">
+      <h3>Recent Passport Entries</h3>
+      <div id="passportHistory" class="subtle">No entries yet.</div>
+    </div>
+  </section>
+
+  <section id="badges" class="panel">
+    <div class="card">
+      <h2>Badges</h2>
+      <p class="subtle"><b>XP and badges are separate.</b> XP determines the overall level. Badges show repeated success in one category, such as pool, sand, nature or teamwork. They are permanent achievements and are not spent.</p>
+      <div class="badge-grid" id="badgeGrid"></div>
+    </div>
+    <div class="card">
+      <h3>Level Perks</h3>
+      <p class="subtle">Levels should create choices, not pressure. Use the current level as a reason to offer one small privilege, such as choosing tomorrow's first location, creating one custom quest, or picking one parent challenge.</p>
+      <div id="levelPerks" class="subtle"></div>
+    </div>
+    <div class="card">
+      <h3>Quest History</h3>
+      <div id="questHistory" class="subtle">No completed quests yet.</div>
+    </div>
+  </section>
+</div>
+
+<script>
+const levelNames = [
+  "Visitor", "Junior Explorer", "Island Scout", "Nature Finder",
+  "Sand Engineer", "Pool Ranger", "Team Explorer", "Island Navigator",
+  "Senior Explorer", "Master of Eden"
+];
+
+const supportLabels = [
+  "Adult check only",
+  "5 min adult help",
+  "10-20 min together",
+  "Full adult supervision"
+];
+
+const zoneLabels = {
+  home_front: "Home Front",
+  home_visible: "Visible Home Zone",
+  home_pool: "Home Pool",
+  park_beach: "Park & Beach",
+  public_pool: "Public Pool",
+  quiet_home: "Quiet Home"
+};
+
+const foundation = [
+  { id: "homework", title: "Morning Learning", text: "Complete one agreed homework, book or thinking task.", xp: 10, cat: "reading" },
+  { id: "help_home", title: "10-Minute Home Helper", text: "Choose one useful job and help for ten minutes.", xp: 10, cat: "helper" }
+];
+
+const quests = [
+  // Home front / independent
+  {id:"hf1",title:"Colour Detective",text:"Find five outdoor things in five different colours inside the agreed Home Front Zone.",zones:["home_front"],support:0,time:"10 min",xp:10,cat:"explorer"},
+  {id:"hf2",title:"Shape Hunt",text:"Find something round, square, long, tiny and symmetrical near the house.",zones:["home_front"],support:0,time:"10 min",xp:10,cat:"detective"},
+  {id:"hf3",title:"Leaf Classifier",text:"Find five fallen leaves. Group them by size, shape or colour. Do not pick living plants.",zones:["home_front","home_visible"],support:0,time:"15 min",xp:10,cat:"nature"},
+  {id:"hf4",title:"Shadow Map",text:"Draw the shapes of three interesting shadows you can see near the house.",zones:["home_front","home_visible"],support:0,time:"15 min",xp:10,cat:"art"},
+  {id:"hf5",title:"Mini Island Map",text:"Draw a simple map from the front door to the edge of your allowed zone.",zones:["home_front"],support:0,time:"15 min",xp:15,cat:"navigator"},
+  {id:"hf6",title:"Ten Tiny Details",text:"Look carefully and write or draw ten small details adults may miss.",zones:["home_front","home_visible"],support:0,time:"15 min",xp:15,cat:"explorer"},
+  {id:"hf7",title:"Pattern Hunter",text:"Find four repeating patterns on houses, paths, plants or fences.",zones:["home_front"],support:0,time:"10 min",xp:10,cat:"detective"},
+  {id:"hf8",title:"Quiet Animal Watch",text:"Watch one bird, gecko, insect or other animal for two minutes. Do not touch it. Then describe what it did.",zones:["home_front","home_visible"],support:0,time:"10 min",xp:15,cat:"nature"},
+  {id:"hf9",title:"Weather Reporter",text:"Describe today's sky, wind, temperature and one sign that shows the weather.",zones:["home_front","home_visible"],support:0,time:"10 min",xp:10,cat:"science"},
+  {id:"hf10",title:"Neighbourhood Numbers",text:"Count ten safe objects near the house: steps, windows, plants, chairs or lamps.",zones:["home_front"],support:0,time:"10 min",xp:10,cat:"math"},
+  {id:"hf11",title:"Sound Collector",text:"Stand quietly and list five different sounds you can hear.",zones:["home_front","home_visible"],support:0,time:"8 min",xp:10,cat:"explorer"},
+  {id:"hf12",title:"Build a Tiny Shelter",text:"Use only safe fallen natural materials to build a tiny pretend shelter on paper or the ground.",zones:["home_front","home_visible"],support:0,time:"20 min",xp:15,cat:"engineer"},
+  {id:"hf13",title:"Treasure Sketch",text:"Choose one safe outdoor object and make a detailed drawing of it.",zones:["home_front","home_visible"],support:0,time:"20 min",xp:15,cat:"art"},
+  {id:"hf14",title:"Question Maker",text:"Create five smart questions about something you can see outside.",zones:["home_front","home_visible"],support:0,time:"10 min",xp:15,cat:"science"},
+  {id:"hf15",title:"Home Flag",text:"Design a flag for your Eden Island home and explain every symbol.",zones:["home_front","quiet_home"],support:0,time:"20 min",xp:15,cat:"art"},
+
+  // Visible home zone
+  {id:"hv1",title:"Safe Boundary Check",text:"Walk along the agreed boundary and point out where the independent zone ends.",zones:["home_visible"],support:1,time:"8 min",xp:10,cat:"navigator"},
+  {id:"hv2",title:"Plant Comparison",text:"Choose two plants you can see. Draw three ways they are different.",zones:["home_visible"],support:0,time:"15 min",xp:10,cat:"nature"},
+  {id:"hv3",title:"Water Reflection Hunt",text:"From a safe dry place, find three reflections in the water and describe them.",zones:["home_visible"],support:1,time:"10 min",xp:10,cat:"science"},
+  {id:"hv4",title:"Fast and Slow",text:"Find one thing moving fast and one moving slowly. Explain why.",zones:["home_visible"],support:0,time:"10 min",xp:10,cat:"science"},
+  {id:"hv5",title:"One-Metre Engineer",text:"Estimate one metre using steps, then check it with an adult.",zones:["home_visible","quiet_home"],support:1,time:"10 min",xp:15,cat:"math"},
+
+  // Home pool
+  {id:"hp1",title:"Dive Toy Rescue",text:"With an adult watching, collect three dive toys one at a time and place them in a rescue station.",zones:["home_pool"],support:3,time:"15 min",xp:15,cat:"pool"},
+  {id:"hp2",title:"Noodle Bridge",text:"Use the foam noodles to create a floating bridge or gate, then swim safely through it.",zones:["home_pool"],support:3,time:"15 min",xp:15,cat:"pool"},
+  {id:"hp3",title:"Two-Ring Island",text:"Use the two rings to invent a safe island game with clear rules.",zones:["home_pool"],support:3,time:"20 min",xp:20,cat:"pool"},
+  {id:"hp4",title:"Floating Delivery",text:"Move three floating toys from one side of the pool to the other without throwing them.",zones:["home_pool"],support:3,time:"15 min",xp:15,cat:"pool"},
+  {id:"hp5",title:"Pool Pattern",text:"Create a sequence using a noodle, a ring and a dive toy. Ask an adult or friend to copy it.",zones:["home_pool"],support:3,time:"15 min",xp:15,cat:"pool"},
+  {id:"hp6",title:"Safe Swim Route",text:"With an adult, choose a short safe route and complete it three times using different swimming movements.",zones:["home_pool"],support:3,time:"20 min",xp:20,cat:"pool"},
+  {id:"hp7",title:"Treasure Zones",text:"Place dive toys in three safe areas. Collect them in the order chosen by the adult.",zones:["home_pool"],support:3,time:"15 min",xp:15,cat:"pool"},
+  {id:"hp8",title:"Invent a Pool Game",text:"Create a new pool game with three rules. Test it with an adult or friend.",zones:["home_pool"],support:3,time:"25 min",xp:20,cat:"pool"},
+  {id:"hp9",title:"Noodle Shapes",text:"Use the foam noodles to make three shapes on the water. Name each one.",zones:["home_pool"],support:3,time:"15 min",xp:15,cat:"pool"},
+  {id:"hp10",title:"Gentle Relay",text:"With a friend and an adult watching, take turns moving one toy safely across the pool.",zones:["home_pool"],support:3,time:"20 min",xp:20,cat:"team",friend:true},
+
+  // Park and beach
+  {id:"pb1",title:"Park Scout",text:"Check whether children are at the park. If yes, ask one child a friendly question. If no, complete a nature mission.",zones:["park_beach"],support:3,time:"30 min",xp:20,cat:"social"},
+  {id:"pb2",title:"Sand City",text:"Build a small city with a road, house, bridge and one special building. An adult helps you start.",zones:["park_beach"],support:2,time:"30 min",xp:20,cat:"sand"},
+  {id:"pb3",title:"Water Channel",text:"Build a sand channel and test whether a small amount of water can travel through it.",zones:["park_beach"],support:2,time:"25 min",xp:20,cat:"sand"},
+  {id:"pb4",title:"Beach Map",text:"Draw a map of the park and nearby beach. Mark the playground, sand, water and buggy stop.",zones:["park_beach"],support:2,time:"25 min",xp:20,cat:"navigator"},
+  {id:"pb5",title:"Footprint Detective",text:"Find three different safe tracks or marks in the sand. Do not follow animals.",zones:["park_beach"],support:2,time:"15 min",xp:15,cat:"detective"},
+  {id:"pb6",title:"Sand Pokémon Arena",text:"Build a pretend arena in the sand for your Pokémon cards or imaginary creatures.",zones:["park_beach"],support:2,time:"30 min",xp:20,cat:"sand"},
+  {id:"pb7",title:"Beach Geometry",text:"Draw a giant circle, triangle, square and maze in the sand.",zones:["park_beach"],support:2,time:"20 min",xp:15,cat:"math"},
+  {id:"pb8",title:"Team Sand Build",text:"With a friend, agree on one thing to build. Each person must add at least three parts.",zones:["park_beach"],support:2,time:"30 min",xp:20,cat:"team",friend:true},
+  {id:"pb9",title:"One New Game",text:"At the park, invite another child to play one simple game for at least five minutes.",zones:["park_beach"],support:3,time:"25 min",xp:25,cat:"social"},
+  {id:"pb10",title:"Photo Story",text:"With the adult holding the phone, take three photos that tell a beginning, middle and end of one park adventure.",zones:["park_beach"],support:2,time:"20 min",xp:20,cat:"photo",photo:true},
+  {id:"pb11",title:"Beach Question Hunt",text:"Ask and answer five questions about sand, water, plants or playground equipment.",zones:["park_beach"],support:2,time:"20 min",xp:15,cat:"science"},
+  {id:"pb12",title:"Build, Test, Improve",text:"Build one sand structure, test it with water, then improve one weak part.",zones:["park_beach"],support:2,time:"30 min",xp:25,cat:"engineer"},
+
+  // Public pool
+  {id:"pp1",title:"Public Pool Explorer",text:"With an adult watching, find three pool rules and explain why they matter.",zones:["public_pool"],support:3,time:"15 min",xp:15,cat:"pool"},
+  {id:"pp2",title:"Friendly Hello",text:"If another child is available, introduce yourself and ask what game they like.",zones:["public_pool"],support:3,time:"15 min",xp:20,cat:"social"},
+  {id:"pp3",title:"Three-Movement Challenge",text:"With an adult, complete three safe swimming movements. No breath-holding contests.",zones:["public_pool"],support:3,time:"20 min",xp:20,cat:"pool"},
+  {id:"pp4",title:"Teach and Learn",text:"Teach a friend one safe pool game and learn one game from them.",zones:["public_pool"],support:3,time:"25 min",xp:25,cat:"team",friend:true},
+  {id:"pp5",title:"Pool Observation",text:"From a safe place, count how many children are swimming, playing and resting. Compare the groups.",zones:["public_pool"],support:3,time:"10 min",xp:15,cat:"math"},
+
+  // Quiet home
+  {id:"qh1",title:"Pokémon Sort Lab",text:"Sort your Pokémon cards in a new way: colour, type, number, favourite or strongest-looking.",zones:["quiet_home"],support:0,time:"20 min",xp:15,cat:"pokemon"},
+  {id:"qh2",title:"Create Your Own Pokémon",text:"Draw a new Pokémon. Give it a name, type, power and weakness.",zones:["quiet_home"],support:0,time:"25 min",xp:20,cat:"art"},
+  {id:"qh3",title:"Mini Sudoku Mission",text:"Complete one child-friendly Sudoku or logic puzzle.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"logic"},
+  {id:"qh4",title:"UNO Rule Designer",text:"Invent one simple house rule for UNO. Explain why it is fair.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"game"},
+  {id:"qh5",title:"Card Memory",text:"Choose 12 playing cards, place them face down and play a memory game alone or with an adult.",zones:["quiet_home"],support:1,time:"20 min",xp:15,cat:"game"},
+  {id:"qh6",title:"Island Comic",text:"Draw a four-panel comic about an adventure on Eden Island.",zones:["quiet_home"],support:0,time:"25 min",xp:20,cat:"art"},
+  {id:"qh7",title:"Math Story",text:"Create a short island story that includes three maths questions.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"math"},
+  {id:"qh8",title:"Build a Card Tower",text:"Use playing cards to build the tallest stable tower you can. Count the cards used.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"engineer"},
+  {id:"qh9",title:"Five-Minute Book Explorer",text:"Read for five minutes, then draw the most important moment.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"reading"},
+  {id:"qh10",title:"Invent a Two-Player Game",text:"Create a simple paper or card game that can be taught in under two minutes.",zones:["quiet_home"],support:1,time:"25 min",xp:20,cat:"game"},
+  {id:"qh11",title:"Island Menu",text:"Design a funny café menu for explorers. Include five foods and prices.",zones:["quiet_home"],support:0,time:"20 min",xp:15,cat:"art"},
+  {id:"qh12",title:"Secret Code",text:"Create a symbol code for ten letters and write a short secret message.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"logic"},
+  {id:"qh13",title:"Classic Card Lesson",text:"Ask an adult to teach one simple card game, then explain the rules back.",zones:["quiet_home"],support:2,time:"20 min",xp:20,cat:"game"},
+  {id:"qh14",title:"Daily Planner",text:"Choose one active task, one quiet task and one helpful task for today.",zones:["quiet_home"],support:0,time:"10 min",xp:10,cat:"planner"},
+  {id:"qh15",title:"Draw the Best House",text:"Design your ideal Eden Island house, pool and garden on paper.",zones:["quiet_home"],support:0,time:"25 min",xp:20,cat:"architect"},
+  {id:"qh16",title:"Ultra Rare Pokémon Find",text:"Find one card you already have that is marked ultra rare and show the rarity mark to an adult.",zones:["quiet_home"],support:0,time:"10 min",xp:20,cat:"pokemon_master"},
+  {id:"qh17",title:"Win an UNO Match",text:"Play complete UNO matches with an adult and win fairly. Confirm each win; three wins earn UNO Master.",zones:["quiet_home"],support:2,time:"25 min",xp:20,cat:"uno",repeatable:true,target:3},
+
+  // Photo missions usable in several locations
+  {id:"ph1",title:"Three Shades of Green",text:"With the adult holding the phone, take photos of three different shades of green.",zones:["home_front","home_visible","park_beach"],support:1,time:"15 min",xp:15,cat:"photo",photo:true},
+  {id:"ph2",title:"Best Island Detail",text:"With an adult, photograph one tiny detail that most people would miss.",zones:["home_front","home_visible","park_beach"],support:1,time:"10 min",xp:15,cat:"photo",photo:true},
+  {id:"ph3",title:"Before and After",text:"With an adult, take one photo before building or drawing and one photo after.",zones:["home_front","quiet_home","park_beach"],support:1,time:"20 min",xp:15,cat:"photo",photo:true}
+];
+
+const bonusPool = [
+  {title:"Explorer's Choice",text:"Create your own safe mission. An adult must approve it before you start.",xp:20},
+  {title:"Kindness Bonus",text:"Help someone without being asked, then explain what you did.",xp:15},
+  {title:"Curiosity Bonus",text:"Ask one question that neither you nor the adult can answer immediately.",xp:15},
+  {title:"Team Bonus",text:"Teach a friend or adult one new game or skill.",xp:20},
+  {title:"Island Story",text:"Tell a two-minute story using three things you saw today.",xp:15}
+];
+
+const badges = [
+  {id:"explorer",name:"Island Explorer",icon:"🧭",need:5,description:"Complete 5 general exploration quests."},
+  {id:"nature",name:"Nature Finder",icon:"🦎",need:3,description:"Complete 3 nature observation quests."},
+  {id:"sand",name:"Sand Engineer",icon:"🏖️",need:3,description:"Complete 3 sand building quests."},
+  {id:"pool",name:"Pool Ranger",icon:"🏊",need:4,description:"Complete 4 supervised pool quests."},
+  {id:"team",name:"Team Explorer",icon:"🤝",need:3,description:"Complete 3 cooperative quests."},
+  {id:"social",name:"Friendly Scout",icon:"👋",need:3,description:"Complete 3 social quests."},
+  {id:"art",name:"Island Artist",icon:"🎨",need:4,description:"Complete 4 drawing or creative quests."},
+  {id:"logic",name:"Logic Master",icon:"🧩",need:3,description:"Complete 3 logic quests."},
+  {id:"navigator",name:"Map Maker",icon:"🗺️",need:3,description:"Complete 3 map or navigation quests."},
+  {id:"photo",name:"Photo Explorer",icon:"📷",need:3,description:"Complete 3 adult-assisted photo quests."},
+  {id:"helper",name:"Home Helper",icon:"✅",need:3,description:"Complete 3 helpful home tasks."},
+  {id:"pokemon_master",name:"Pokémon Master",icon:"⭐",need:1,description:"Find 1 ultra rare Pokémon card you already have and show it to an adult."},
+  {id:"uno_master",name:"UNO Master",icon:"🃏",need:3,description:"Win 3 complete UNO matches fairly."}
+];
+
+const levelPerks = [
+  "Ask an adult to choose today's first location.",
+  "Create one custom safe quest with adult approval.",
+  "Pick one quest for an adult to complete.",
+  "Choose one friend-mode or pool mission when it is safe.",
+  "Turn one completed quest into a harder version for bonus XP.",
+  "Choose tomorrow's first badge target.",
+  "Design one new badge idea.",
+  "Pick one route for the next buggy trip.",
+  "Choose the evening family game.",
+  "Create a final Master Explorer challenge."
+];
+
+const defaultState = () => ({
+  version: 3,
+  xp: 0,
+  foundationDone: {},
+  choices: [],
+  selected: [],
+  picked: [],
+  extraAdded: 0,
+  completed: [],
+  bonus: null,
+  bonusDone: false,
+  passport: [],
+  feedback: [],
+  dayArchive: [],
+  cloud: {
+    familyId: "",
+    pin: "",
+    revision: 0,
+    lastSyncedAt: ""
+  },
+  settings: {
+    zones: [],
+    support: 0,
+    friend: false,
+    photo: false
+  },
+  date: todayKey()
+});
+
+let state = normalizeState(JSON.parse(localStorage.getItem("edenExplorerState") || "null"));
+if (rollStateForwardToToday(state)) {
+  localStorage.setItem("edenExplorerState", JSON.stringify(state));
+}
+
+function normalizeState(raw) {
+  const base = defaultState();
+  if (!raw || typeof raw !== "object") return base;
+  const normalizedCompleted = Array.isArray(raw.completed) ? raw.completed.map(item => ({
+    ...item,
+    cat: normalizeCompletedCategory(item)
+  })) : [];
+  return {
+    ...base,
+    ...raw,
+    version: 3,
+    settings: {...base.settings, ...(raw.settings || {})},
+    cloud: {...base.cloud, ...(raw.cloud || {})},
+    extraAdded: Number.isFinite(raw.extraAdded) ? raw.extraAdded : 0,
+    feedback: Array.isArray(raw.feedback) ? raw.feedback : [],
+    dayArchive: Array.isArray(raw.dayArchive) ? raw.dayArchive : [],
+    passport: Array.isArray(raw.passport) ? raw.passport : [],
+    completed: normalizedCompleted,
+    choices: Array.isArray(raw.choices) ? raw.choices : [],
+    selected: Array.isArray(raw.selected) ? raw.selected : [],
+    picked: Array.isArray(raw.picked) ? raw.picked : []
+  };
+}
+
+function normalizeCompletedCategory(item) {
+  if (!item || typeof item !== "object") return "explorer";
+  if (item.id === "homework") return "reading";
+  if (item.id === "help_home") return "helper";
+  if (String(item.id || "").startsWith("bonus_")) return "bonus";
+  const quest = quests.find(q => q.id === item.id);
+  return quest?.cat || item.cat || "explorer";
+}
+
+let cloudSaveTimer = null;
+
+function save(message = "Saved on this device") {
+  localStorage.setItem("edenExplorerState", JSON.stringify(state));
+  const el = document.getElementById("saveStatus");
+  if (el) {
+    el.textContent = message;
+    setTimeout(() => {
+      if (document.getElementById("saveStatus")) {
+        document.getElementById("saveStatus").textContent = "Saved on this device";
       }
-    })();
-  </script>
+    }, 1600);
+  }
+  renderAll();
+  queueCloudSave();
+}
+
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function todayKey() { return localDateKey(); }
+function activeDate() { return state.date || todayKey(); }
+function dateWithOffset(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return localDateKey(d);
+}
+
+function archiveStateDay(target) {
+  const date = target.date || todayKey();
+  const existingIndex = target.dayArchive.findIndex(d => d.date === date);
+  const snapshot = {
+    date,
+    foundationDone: {...target.foundationDone},
+    choices: [...target.choices],
+    selected: [...target.selected],
+    picked: [...target.picked],
+    extraAdded: target.extraAdded || 0,
+    completedQuestIds: target.completed.filter(c => c.date === date).map(c => c.id),
+    bonus: target.bonus,
+    bonusDone: target.bonusDone
+  };
+  if (existingIndex >= 0) target.dayArchive[existingIndex] = snapshot;
+  else target.dayArchive.push(snapshot);
+}
+
+function resetStateDay(target, date) {
+  target.date = date;
+  target.foundationDone = {};
+  target.choices = [];
+  target.selected = [];
+  target.picked = [];
+  target.extraAdded = 0;
+  target.bonus = null;
+  target.bonusDone = false;
+}
+
+function rollStateForwardToToday(target) {
+  const today = todayKey();
+  if (!target.date || target.date >= today) return false;
+  archiveStateDay(target);
+  resetStateDay(target, today);
+  return true;
+}
+
+function archiveCurrentDay() {
+  archiveStateDay(state);
+}
+
+function startNewDay() {
+  archiveCurrentDay();
+  resetStateDay(state, todayKey());
+  save("New day started and previous day archived");
+}
+
+function switchActiveDate(date) {
+  if (!date || date === activeDate()) return;
+  archiveCurrentDay();
+  const snapshot = state.dayArchive.find(d => d.date === date);
+  state.date = date;
+  state.foundationDone = snapshot?.foundationDone ? {...snapshot.foundationDone} : {};
+  state.choices = snapshot?.choices ? [...snapshot.choices] : [];
+  state.selected = snapshot?.selected ? [...snapshot.selected] : [];
+  state.picked = snapshot?.picked ? [...snapshot.picked] : [];
+  state.extraAdded = snapshot?.extraAdded || 0;
+  state.bonus = snapshot?.bonus || null;
+  state.bonusDone = !!snapshot?.bonusDone;
+  save(`Recording progress for ${date}`);
+}
+
+function restoreSettings() {
+  const zones = new Set(state.settings.zones || []);
+  document.querySelectorAll(".zone").forEach(el => el.checked = zones.has(el.value));
+  document.getElementById("supportLevel").value = String(state.settings.support ?? 0);
+  document.getElementById("friendMode").checked = !!state.settings.friend;
+  document.getElementById("photoMode").checked = !!state.settings.photo;
+  document.getElementById("familyCodeInput").value = state.cloud?.familyId || "";
+  document.getElementById("cloudPinInput").value = state.cloud?.pin || "";
+}
+
+function readSettings() {
+  state.settings = {
+    zones: [...document.querySelectorAll(".zone:checked")].map(x => x.value),
+    support: Number(document.getElementById("supportLevel").value),
+    friend: document.getElementById("friendMode").checked,
+    photo: document.getElementById("photoMode").checked
+  };
+}
+
+function encodeState() {
+  const payload = JSON.stringify({app:"EdenIslandExplorer",version:3,state: stateForExport()});
+  return btoa(unescape(encodeURIComponent(payload)));
+}
+
+function decodeState(code) {
+  const payload = decodeURIComponent(escape(atob(code.trim())));
+  const parsed = JSON.parse(payload);
+  if (parsed.app && parsed.app !== "EdenIslandExplorer") throw new Error("Wrong sync code");
+  return normalizeState(parsed.state || parsed);
+}
+
+function downloadBackup() {
+  const payload = {
+    app: "EdenIslandExplorer",
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    state: stateForExport()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `eden-explorer-backup-${activeDate()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function currentDaySummary() {
+  const completedToday = state.completed.filter(c => c.date === activeDate());
+  const activeTitles = state.selected.map(id => quests.find(q => q.id === id)?.title).filter(Boolean);
+  const feedback = state.feedback.find(f => f.date === activeDate());
+  const passport = state.passport.find(p => p.date === activeDate());
+
+  return [
+    `Eden Island Explorer - ${activeDate()}`,
+    `Total XP: ${state.xp}`,
+    `Current level: ${levelFromXp(state.xp)} - ${levelNames[levelFromXp(state.xp)-1]}`,
+    `Selected quests: ${activeTitles.length ? activeTitles.join(", ") : "none"}`,
+    `Completed today: ${completedToday.length ? completedToday.map(c => c.title).join(", ") : "none"}`,
+    `Started independently: ${feedback?.started || "not recorded"}`,
+    `Adult time: ${feedback?.adultTime || "not recorded"}`,
+    `Phone requests: ${feedback?.phone || "not recorded"}`,
+    `Favourite: ${feedback?.favourite || "not recorded"}`,
+    `Issues: ${feedback?.issue || "none recorded"}`,
+    `Discovery: ${passport?.discovery || "not recorded"}`
+  ].join("\n");
+}
+
+function levelFromXp(xp) {
+  return Math.min(10, Math.floor(xp / 100) + 1);
+}
+
+const badgeCategoryMap = {
+  explorer: "explorer",
+  reading: "explorer",
+  planner: "explorer",
+  bonus: "explorer",
+
+  nature: "nature",
+  science: "nature",
+
+  sand: "sand",
+  engineer: "sand",
+  architect: "sand",
+
+  pool: "pool",
+
+  team: "team",
+  game: "team",
+
+  social: "social",
+
+  art: "art",
+  pokemon: "art",
+
+  logic: "logic",
+  math: "logic",
+  detective: "logic",
+
+  navigator: "navigator",
+  photo: "photo",
+  helper: "helper",
+  pokemon_master: "pokemon_master",
+  uno: "uno_master"
+};
+
+function badgeForCategory(cat) {
+  const badgeId = badgeCategoryMap[cat];
+  return badges.find(b => b.id === badgeId) || null;
+}
+
+function badgeLabelForCategory(cat) {
+  const badge = badgeForCategory(cat);
+  return badge ? badge.name : "No badge";
+}
+
+function badgeSourceLabels(badgeId) {
+  return Object.entries(badgeCategoryMap)
+    .filter(([, target]) => target === badgeId)
+    .map(([source]) => source);
+}
+
+function categoryCounts() {
+  const counts = {};
+  state.completed.forEach(item => {
+    const badgeCategory = badgeCategoryMap[item.cat];
+    if (!badgeCategory) return;
+    counts[badgeCategory] = (counts[badgeCategory] || 0) + 1;
+  });
+  return counts;
+}
+
+function unlockedBadges() {
+  const counts = categoryCounts();
+  return badges.filter(b => (counts[b.id] || 0) >= b.need);
+}
+
+function renderHeader() {
+  document.getElementById("xpValue").textContent = state.xp;
+  const level = levelFromXp(state.xp);
+  document.getElementById("levelValue").textContent = level;
+  document.getElementById("badgeValue").textContent = unlockedBadges().length;
+  document.getElementById("activeDateLabel").textContent =
+    `Active adventure: ${activeDate()} · ${levelNames[level - 1]}`;
+
+  const notice = document.getElementById("oldDayNotice");
+  if (activeDate() !== todayKey()) notice.classList.remove("hidden");
+  else notice.classList.add("hidden");
+
+  if (state.cloud?.familyId) {
+    setCloudStatus(`Cloud connected: ${state.cloud.familyId}. Revision ${state.cloud.revision || 0}.`);
+  }
+}
+
+function renderFoundation() {
+  const box = document.getElementById("foundationTasks");
+  box.innerHTML = "";
+  foundation.forEach(f => {
+    const done = state.completed.some(c => c.id === f.id && c.date === activeDate());
+    const div = document.createElement("div");
+    div.className = "quest " + (done ? "completed" : "");
+    div.innerHTML = `
+      <div class="quest-title">${f.title}</div>
+      <div class="quest-text">${f.text}</div>
+      <div class="meta"><span class="tag xp">+${f.xp} XP</span><span class="tag">Badge: ${badgeLabelForCategory(f.cat)}</span></div>
+      ${done
+        ? `<div class="row"><button class="btn small secondary" disabled>Completed for ${activeDate()}</button><button class="btn small ghost undo-foundation">Undo</button></div>`
+        : `<button class="btn small complete-foundation">Mark Complete</button>`}
+    `;
+    if (done) {
+      div.querySelector(".undo-foundation").onclick = () => {
+        if (!confirm(`Undo ${f.title} for ${activeDate()} and remove ${f.xp} XP?`)) return;
+        const completedIndex = state.completed.findIndex(c => c.id === f.id && c.date === activeDate());
+        if (completedIndex >= 0) {
+          state.completed.splice(completedIndex, 1);
+          state.xp = Math.max(0, state.xp - f.xp);
+          delete state.foundationDone[f.id];
+          save(`${f.title} reopened for ${activeDate()}`);
+        }
+      };
+    } else {
+      div.querySelector(".complete-foundation").onclick = () => {
+        state.foundationDone[f.id] = true;
+        state.xp += f.xp;
+        state.completed.push({id:f.id,title:f.title,cat:f.cat,xp:f.xp,date:activeDate()});
+        save();
+      };
+    }
+    box.appendChild(div);
+  });
+}
+
+function renderChoices() {
+  const no = document.getElementById("noQuests");
+  const box = document.getElementById("questChoices");
+  const lock = document.getElementById("lockChoicesBtn");
+  box.innerHTML = "";
+  if (!state.choices.length) {
+    no.classList.remove("hidden");
+    lock.classList.add("hidden");
+    return;
+  }
+  no.classList.add("hidden");
+  if (state.selected.length) {
+    lock.classList.add("hidden");
+    return;
+  }
+  lock.classList.remove("hidden");
+
+  state.choices.forEach(id => {
+    const q = quests.find(x => x.id === id);
+    const selected = (state.picked || []).includes(q.id);
+    const div = document.createElement("div");
+    div.className = "quest " + (selected ? "selected" : "");
+    div.innerHTML = `
+      <div class="quest-title">${q.title}</div>
+      <div class="quest-text">${q.text}</div>
+      <div class="meta">
+        <span class="tag">${zoneLabels[q.zones[0]]}</span>
+        <span class="tag">${q.time}</span>
+        <span class="tag">${supportLabels[q.support]}</span>
+        <span class="tag xp">+${q.xp} XP</span>
+        <span class="tag">Badge: ${badgeLabelForCategory(q.cat)}</span>
+      </div>
+      <button class="btn small ${selected ? "secondary" : ""}">${selected ? "Selected" : "Choose"}</button>
+    `;
+    div.querySelector("button").onclick = () => {
+      state.picked = state.picked || [];
+      const currently = state.picked.length;
+      if (!state.picked.includes(q.id) && currently >= 3) {
+        alert("Choose up to 3 quests.");
+        return;
+      }
+      if (state.picked.includes(q.id)) {
+        state.picked = state.picked.filter(id => id !== q.id);
+      } else {
+        state.picked.push(q.id);
+      }
+      localStorage.setItem("edenExplorerState", JSON.stringify(state));
+      renderChoices();
+    };
+    box.appendChild(div);
+  });
+}
+
+function renderActive() {
+  const box = document.getElementById("activeQuests");
+  const empty = document.getElementById("activeEmpty");
+  const extraBtn = document.getElementById("addExtraQuestBtn");
+  const extraNote = document.getElementById("extraQuestNote");
+  box.innerHTML = "";
+  extraNote.textContent = `${state.extraAdded || 0} / 2 extra quests added today. Extra quests use the same adult setup and safety filters.`;
+  extraBtn.disabled = !state.selected.length || (state.extraAdded || 0) >= 2;
+  if (!state.selected.length) {
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+  state.selected.forEach(id => {
+    const q = quests.find(x => x.id === id);
+    const totalCompletions = state.completed.filter(c => c.id === id).length;
+    const done = q.repeatable
+      ? totalCompletions >= q.target
+      : state.completed.some(c => c.id === id && c.date === activeDate());
+    const actionLabel = q.repeatable
+      ? (done ? "Completed" : `Adult Confirms Win (${totalCompletions} / ${q.target})`)
+      : (done ? "Completed" : "Adult Confirms Completion");
+    const div = document.createElement("div");
+    div.className = "quest " + (done ? "completed" : "");
+    div.innerHTML = `
+      <div class="quest-title">${q.title}</div>
+      <div class="quest-text">${q.text}</div>
+      <div class="meta">
+        <span class="tag">${zoneLabels[q.zones[0]]}</span>
+        <span class="tag">${q.time}</span>
+        <span class="tag">${supportLabels[q.support]}</span>
+        <span class="tag xp">+${q.xp} XP</span>
+        <span class="tag">Badge: ${badgeLabelForCategory(q.cat)}</span>
+      </div>
+      <button class="btn small ${done ? "secondary" : ""}" ${done ? "disabled" : ""}>${actionLabel}</button>
+    `;
+    div.querySelector("button").onclick = () => {
+      if (!done) {
+        state.completed.push({id:q.id,title:q.title,cat:q.cat,xp:q.xp,date:activeDate()});
+        state.xp += q.xp;
+        save();
+      }
+    };
+    box.appendChild(div);
+  });
+}
+
+function eligibleQuestsForCurrentSettings() {
+  readSettings();
+  const zones = state.settings.zones;
+  const support = state.settings.support;
+  const friend = state.settings.friend;
+  const photo = state.settings.photo;
+  const selectedIds = new Set(state.selected || []);
+  const completedToday = new Set(state.completed.filter(c => c.date === activeDate()).map(c => c.id));
+  const completionCounts = state.completed.reduce((counts, item) => {
+    counts[item.id] = (counts[item.id] || 0) + 1;
+    return counts;
+  }, {});
+
+  return quests.filter(q =>
+    q.zones.some(z => zones.includes(z)) &&
+    q.support <= support &&
+    (!q.friend || friend) &&
+    (!q.photo || photo) &&
+    !selectedIds.has(q.id) &&
+    (!completedToday.has(q.id) || (q.repeatable && (completionCounts[q.id] || 0) < q.target))
+  );
+}
+
+function addExtraQuest() {
+  if (!state.selected.length) {
+    alert("Lock the first quests before adding extras.");
+    return;
+  }
+  if ((state.extraAdded || 0) >= 2) {
+    alert("You can add up to 2 extra quests in one day.");
+    return;
+  }
+  const recentlyCompletedIds = new Set(state.completed.slice(-12).map(c => c.id));
+  const eligible = eligibleQuestsForCurrentSettings().sort((a,b) => {
+    const ap = recentlyCompletedIds.has(a.id) ? 1 : 0;
+    const bp = recentlyCompletedIds.has(b.id) ? 1 : 0;
+    return ap - bp || Math.random() - 0.5;
+  });
+  if (!eligible.length) {
+    alert("No extra quest matches the current setup. Add another location or increase adult availability.");
+    return;
+  }
+  state.selected.push(eligible[0].id);
+  state.extraAdded = (state.extraAdded || 0) + 1;
+  save(`Added extra quest: ${eligible[0].title}`);
+}
+
+function renderBonus() {
+  const box = document.getElementById("bonusQuest");
+  if (!state.bonus) {
+    box.className = "inline-note";
+    box.innerHTML = "Generate today's missions to receive a bonus quest.";
+    return;
+  }
+  const b = state.bonus;
+  box.className = "quest " + (state.bonusDone ? "completed" : "");
+  box.innerHTML = `
+    <div class="quest-title">${b.title}</div>
+    <div class="quest-text">${b.text}</div>
+    <div class="meta"><span class="tag xp">+${b.xp} XP</span><span class="tag">Optional</span><span class="tag">Badge: ${badgeLabelForCategory("bonus")}</span></div>
+    <button class="btn small ${state.bonusDone ? "secondary" : ""}" ${state.bonusDone ? "disabled" : ""}>${state.bonusDone ? "Completed" : "Adult Confirms Completion"}</button>
+  `;
+  box.querySelector("button").onclick = () => {
+    if (!state.bonusDone) {
+      state.bonusDone = true;
+      state.xp += b.xp;
+      state.completed.push({id:"bonus_"+activeDate(),title:b.title,cat:"bonus",xp:b.xp,date:activeDate()});
+      save();
+    }
+  };
+}
+
+function renderBadges() {
+  const counts = categoryCounts();
+  const grid = document.getElementById("badgeGrid");
+  grid.innerHTML = "";
+  badges.forEach(b => {
+    const current = counts[b.id] || 0;
+    const open = current >= b.need;
+    const div = document.createElement("div");
+    div.className = "badge " + (open ? "" : "locked");
+    div.innerHTML = `
+      <div class="icon">${b.icon}</div>
+      <b>${b.name}</b>
+      <span class="subtle">${b.description}</span>
+      <br><span class="subtle"><b>Counts from:</b> ${badgeSourceLabels(b.id).join(", ")}</span>
+      <div class="progress"><div style="width:${Math.min(100,current/b.need*100)}%"></div></div>
+      <span class="subtle">${Math.min(current,b.need)} / ${b.need} matching quests</span>
+    `;
+    grid.appendChild(div);
+  });
+
+  const history = document.getElementById("questHistory");
+  if (!state.completed.length) {
+    history.textContent = "No completed quests yet.";
+  } else {
+    history.innerHTML = state.completed.slice().reverse().slice(0,20).map(c =>
+      `<div class="history-item"><b>${c.title}</b><br><span>${c.date} · +${c.xp} XP</span></div>`
+    ).join("");
+  }
+
+  const level = levelFromXp(state.xp);
+  const perkBox = document.getElementById("levelPerks");
+  perkBox.innerHTML = levelPerks.map((perk, index) => {
+    const unlocked = index < level;
+    return `<div class="history-item" style="${unlocked ? "" : "opacity:.45;"}"><b>Level ${index + 1}: ${levelNames[index]}</b><br><span>${perk}</span></div>`;
+  }).join("");
+}
+
+function renderPassport() {
+  const history = document.getElementById("passportHistory");
+  if (!state.passport.length) {
+    history.textContent = "No entries yet.";
+  } else {
+    history.innerHTML = state.passport.slice().reverse().map(p =>
+      `<div class="history-item"><b>${p.date}</b><br>
+      <span><b>Discovered:</b> ${escapeHtml(p.discovery || "-")}</span><br>
+      <span><b>Favourite:</b> ${escapeHtml(p.favourite || "-")}</span><br>
+      <span><b>Tomorrow:</b> ${escapeHtml(p.tomorrow || "-")}</span></div>`
+    ).join("");
+  }
+}
+
+function renderRecordDateOptions() {
+  const select = document.getElementById("recordDateSelect");
+  const current = activeDate();
+  const options = [
+    {value: todayKey(), label: `Today (${todayKey()})`},
+    {value: dateWithOffset(-1), label: `Yesterday (${dateWithOffset(-1)})`}
+  ];
+  if (!options.some(o => o.value === current)) {
+    options.push({value: current, label: `Current open day (${current})`});
+  }
+  select.innerHTML = options.map(o =>
+    `<option value="${o.value}" ${o.value === current ? "selected" : ""}>${o.label}</option>`
+  ).join("");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function renderAll() {
+  renderHeader();
+  renderRecordDateOptions();
+  renderFoundation();
+  renderChoices();
+  renderActive();
+  renderBonus();
+  renderBadges();
+  renderPassport();
+}
+
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.target).classList.add("active");
+  };
+});
+
+document.getElementById("generateBtn").onclick = () => {
+  readSettings();
+  const zones = state.settings.zones;
+  const support = state.settings.support;
+  const friend = state.settings.friend;
+  const photo = state.settings.photo;
+
+  if (!zones.length) {
+    alert("Choose at least one available location.");
+    return;
+  }
+
+  let eligible = eligibleQuestsForCurrentSettings();
+
+  const recentlyCompletedIds = new Set(state.completed.slice(-12).map(c => c.id));
+  eligible = eligible.sort((a,b) => {
+    const ap = recentlyCompletedIds.has(a.id) ? 1 : 0;
+    const bp = recentlyCompletedIds.has(b.id) ? 1 : 0;
+    return ap - bp || Math.random() - 0.5;
+  });
+
+  if (eligible.length < 3) {
+    alert("Not enough missions match today's setup. Add another location or increase adult availability.");
+    return;
+  }
+
+  state.picked = [];
+  state.choices = eligible.slice(0, Math.min(6, eligible.length)).map(q => q.id);
+  state.selected = [];
+  state.extraAdded = 0;
+  state.bonus = bonusPool[Math.floor(Math.random() * bonusPool.length)];
+  state.bonusDone = false;
+  save();
+
+  document.querySelector('[data-target="today"]').click();
+};
+
+document.getElementById("lockChoicesBtn").onclick = () => {
+  const picked = state.picked || [];
+  if (!picked.length) {
+    alert("Choose at least one quest.");
+    return;
+  }
+  state.selected = [...picked];
+  state.picked = [];
+  save();
+};
+
+document.getElementById("addExtraQuestBtn").onclick = addExtraQuest;
+
+document.getElementById("switchRecordDateBtn").onclick = () => {
+  const date = document.getElementById("recordDateSelect").value;
+  if (!date || date === activeDate()) return;
+  if (!confirm(`Switch active recording date to ${date}?`)) return;
+  switchActiveDate(date);
+  restoreSettings();
+  loadFeedbackFields();
+};
+
+document.getElementById("resetDayBtn").onclick = () => {
+  if (!confirm("Reset today's generated choices? Completed XP and history will stay.")) return;
+  state.choices = [];
+  state.selected = [];
+  state.picked = [];
+  state.extraAdded = 0;
+  state.bonus = null;
+  state.bonusDone = false;
+  save("Today's choices reset");
+};
+
+document.getElementById("startNewDayBtn").onclick = () => {
+  if (!confirm("Archive the current adventure and start a new day? Completed XP and history will stay.")) return;
+  startNewDay();
+  loadFeedbackFields();
+};
+
+document.getElementById("savePassportBtn").onclick = () => {
+  const discovery = document.getElementById("discoveryText").value.trim();
+  const favourite = document.getElementById("favouriteText").value.trim();
+  const tomorrow = document.getElementById("tomorrowText").value.trim();
+
+  const existing = state.passport.find(p => p.date === activeDate());
+  if (existing) {
+    existing.discovery = discovery;
+    existing.favourite = favourite;
+    existing.tomorrow = tomorrow;
+  } else {
+    state.passport.push({date:activeDate(), discovery, favourite, tomorrow});
+  }
+  document.getElementById("discoveryText").value = "";
+  document.getElementById("favouriteText").value = "";
+  document.getElementById("tomorrowText").value = "";
+  save();
+  alert("Passport saved.");
+};
+
+
+document.querySelectorAll(".zone, #supportLevel, #friendMode, #photoMode").forEach(el => {
+  el.addEventListener("change", () => {
+    readSettings();
+    localStorage.setItem("edenExplorerState", JSON.stringify(state));
+    document.getElementById("saveStatus").textContent = "Settings saved on this device";
+    queueCloudSave();
+  });
+});
+
+function setCloudStatus(message) {
+  const el = document.getElementById("cloudStatus");
+  if (el) el.textContent = message;
+}
+
+function normalizedFamilyId() {
+  return document.getElementById("familyCodeInput").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-").slice(0, 64);
+}
+
+function cloudPin() {
+  return document.getElementById("cloudPinInput").value.trim();
+}
+
+function localProgressSummary() {
+  return `${state.xp} XP, ${state.completed.length} completed quests, ${state.selected.length} active quests, ${state.passport.length} passport entries`;
+}
+
+function hasMeaningfulLocalProgress() {
+  return state.xp > 0 ||
+    state.completed.length > 0 ||
+    state.choices.length > 0 ||
+    state.selected.length > 0 ||
+    state.passport.length > 0 ||
+    state.feedback.length > 0 ||
+    state.dayArchive.length > 0;
+}
+
+async function provisionMissingFamily(familyId, pin) {
+  const summary = localProgressSummary();
+  if (!hasMeaningfulLocalProgress()) {
+    setCloudStatus(`Family "${familyId}" was not found. Nothing was created.`);
+    alert(`No cloud family exists for "${familyId}". This device has no progress to upload, so a new family was not created. Check the Family Code for typing mistakes.`);
+    return;
+  }
+
+  const previousFamilyId = state.cloud?.familyId;
+  const previousFamilyNote = previousFamilyId && previousFamilyId !== familyId
+    ? `\n\nThis device was previously connected to "${previousFamilyId}".`
+    : "";
+  const approved = confirm(
+    `No cloud family exists for "${familyId}".${previousFamilyNote}\n\nThis device contains ${summary}.\n\nCreate this new family and upload this progress?`
+  );
+  if (!approved) {
+    setCloudStatus(`Family "${familyId}" was not found. Nothing was created.`);
+    return;
+  }
+
+  const repeatedCode = prompt(`Type the exact Family Code to confirm creating a new family:\n\n${familyId}`);
+  if (repeatedCode !== familyId) {
+    setCloudStatus("Family creation cancelled because the confirmation code did not match.");
+    alert("Family Code did not match. Nothing was created or uploaded.");
+    return;
+  }
+
+  state.cloud = {...(state.cloud || {}), familyId, pin, revision: 0};
+  localStorage.setItem("edenExplorerState", JSON.stringify(state));
+  await saveToCloud(true);
+}
+
+function stateForCloud() {
+  return stateForExport();
+}
+
+function stateForExport() {
+  const clean = JSON.parse(JSON.stringify(state));
+  if (clean.cloud) clean.cloud.pin = "";
+  return clean;
+}
+
+function queueCloudSave() {
+  if (!state.cloud?.familyId) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(() => saveToCloud(false), 900);
+}
+
+async function saveToCloud(manual = true) {
+  const familyId = state.cloud?.familyId || normalizedFamilyId();
+  if (!familyId) {
+    if (manual) alert("Enter a family code first.");
+    return;
+  }
+  const pin = state.cloud?.pin || cloudPin();
+  if (!pin) {
+    if (manual) alert("Enter the adult Cloud PIN first.");
+    return;
+  }
+  state.cloud = {...(state.cloud || {}), familyId, pin};
+  setCloudStatus("Saving to cloud...");
+  try {
+    const response = await fetch("/api/state", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "x-eden-pin": pin},
+      body: JSON.stringify({familyId, revision: state.cloud.revision || 0, state: stateForCloud()})
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 409 && data.state) {
+      setCloudStatus("Cloud has newer progress. Load Cloud before saving again.");
+      if (manual && confirm("Cloud has newer progress. Load it now?")) {
+        state = normalizeState(data.state);
+        state.cloud = {...(state.cloud || {}), familyId, pin, revision: data.revision || 0, lastSyncedAt: data.updatedAt || ""};
+        localStorage.setItem("edenExplorerState", JSON.stringify(state));
+        restoreSettings();
+        loadFeedbackFields();
+        renderAll();
+      }
+      return;
+    }
+    if (!response.ok) throw new Error(data.error || "Cloud save failed");
+    state.cloud.revision = data.revision || (state.cloud.revision || 0);
+    state.cloud.lastSyncedAt = data.updatedAt || new Date().toISOString();
+    localStorage.setItem("edenExplorerState", JSON.stringify(state));
+    setCloudStatus(`Cloud saved. Revision ${state.cloud.revision}.`);
+  } catch (error) {
+    setCloudStatus(`Cloud sync unavailable: ${error.message}`);
+    if (manual) alert("Cloud sync is not available yet. Manual sync code and backups still work.");
+  }
+}
+
+async function loadFromCloud() {
+  const familyId = normalizedFamilyId() || state.cloud?.familyId;
+  if (!familyId) {
+    alert("Enter a family code first.");
+    return;
+  }
+  const pin = cloudPin() || state.cloud?.pin;
+  if (!pin) {
+    alert("Enter the adult Cloud PIN first.");
+    return;
+  }
+  setCloudStatus("Loading from cloud...");
+  try {
+    const response = await fetch(`/api/state?familyId=${encodeURIComponent(familyId)}`, {
+      headers: {"x-eden-pin": pin}
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 404) {
+      await provisionMissingFamily(familyId, pin);
+      return;
+    }
+    if (!response.ok) throw new Error(data.error || "Cloud load failed");
+    if (!confirm("Replace this device with cloud progress?")) return;
+    state = normalizeState(data.state);
+    state.cloud = {...(state.cloud || {}), familyId, pin, revision: data.revision || 0, lastSyncedAt: data.updatedAt || ""};
+    const advancedToToday = rollStateForwardToToday(state);
+    localStorage.setItem("edenExplorerState", JSON.stringify(state));
+    restoreSettings();
+    loadFeedbackFields();
+    renderAll();
+    if (advancedToToday) {
+      await saveToCloud(false);
+      setCloudStatus(`Cloud loaded and advanced to today. Revision ${state.cloud.revision}.`);
+    } else {
+      setCloudStatus(`Cloud loaded. Revision ${state.cloud.revision}.`);
+    }
+  } catch (error) {
+    setCloudStatus(`Cloud sync unavailable: ${error.message}`);
+    alert("Cloud sync is not available yet. Manual sync code and backups still work.");
+  }
+}
+
+document.getElementById("connectCloudBtn").onclick = async () => {
+  const familyId = normalizedFamilyId();
+  if (!familyId) {
+    alert("Enter a family code first.");
+    return;
+  }
+  document.getElementById("familyCodeInput").value = familyId;
+  const pin = cloudPin();
+  if (!pin) {
+    alert("Enter the adult Cloud PIN first.");
+    return;
+  }
+  await loadFromCloud();
+};
+
+document.getElementById("loadCloudBtn").onclick = loadFromCloud;
+document.getElementById("saveCloudBtn").onclick = () => saveToCloud(true);
+document.getElementById("copyFamilyCodeBtn").onclick = async () => {
+  const familyId = state.cloud?.familyId || normalizedFamilyId();
+  if (!familyId) {
+    alert("Connect or enter a Family Code first.");
+    return;
+  }
+  document.getElementById("familyCodeInput").value = familyId;
+  try {
+    await navigator.clipboard.writeText(familyId);
+    alert(`Family Code copied: ${familyId}`);
+  } catch {
+    document.getElementById("familyCodeInput").select();
+    alert("Family Code selected. Copy it manually.");
+  }
+};
+
+document.getElementById("copySyncBtn").onclick = async () => {
+  const code = encodeState();
+  document.getElementById("syncCodeInput").value = code;
+  try {
+    await navigator.clipboard.writeText(code);
+    alert("Sync code copied. Send it to the other device and import it there.");
+  } catch {
+    document.getElementById("syncCodeInput").select();
+    alert("Copy the selected sync code manually.");
+  }
+};
+
+document.getElementById("importSyncBtn").onclick = () => {
+  const code = document.getElementById("syncCodeInput").value.trim();
+  if (!code) {
+    alert("Paste a sync code first.");
+    return;
+  }
+  try {
+    if (!confirm("Replace the current device state with the imported state?")) return;
+    state = decodeState(code);
+    localStorage.setItem("edenExplorerState", JSON.stringify(state));
+    restoreSettings();
+    loadFeedbackFields();
+    renderAll();
+    alert("Progress imported successfully.");
+  } catch (error) {
+    alert("The sync code is invalid or incomplete.");
+  }
+};
+
+document.getElementById("downloadBackupBtn").onclick = downloadBackup;
+
+document.getElementById("importBackupInput").onchange = event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!confirm("Replace the current device state with this backup?")) return;
+      state = normalizeState(parsed.state || parsed);
+      localStorage.setItem("edenExplorerState", JSON.stringify(state));
+      restoreSettings();
+      loadFeedbackFields();
+      renderAll();
+      alert("Backup imported successfully.");
+    } catch {
+      alert("This backup file is invalid.");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+};
+
+function loadFeedbackFields() {
+  const f = state.feedback.find(x => x.date === activeDate()) || {};
+  document.getElementById("feedbackStart").value = f.started || "";
+  document.getElementById("feedbackAdultTime").value = f.adultTime || "";
+  document.getElementById("feedbackPhone").value = f.phone || "";
+  document.getElementById("feedbackFavourite").value = f.favourite || "";
+  document.getElementById("feedbackIssue").value = f.issue || "";
+}
+
+document.getElementById("saveFeedbackBtn").onclick = () => {
+  const entry = {
+    date: activeDate(),
+    started: document.getElementById("feedbackStart").value,
+    adultTime: document.getElementById("feedbackAdultTime").value,
+    phone: document.getElementById("feedbackPhone").value,
+    favourite: document.getElementById("feedbackFavourite").value.trim(),
+    issue: document.getElementById("feedbackIssue").value.trim()
+  };
+  const index = state.feedback.findIndex(x => x.date === activeDate());
+  if (index >= 0) state.feedback[index] = entry;
+  else state.feedback.push(entry);
+  save("Test notes saved");
+  alert("Test notes saved.");
+};
+
+document.getElementById("copySummaryBtn").onclick = async () => {
+  const summary = currentDaySummary();
+  try {
+    await navigator.clipboard.writeText(summary);
+    alert("Today's summary copied.");
+  } catch {
+    document.getElementById("syncCodeInput").value = summary;
+    document.getElementById("syncCodeInput").select();
+    alert("Summary placed in the text box. Copy it manually.");
+  }
+};
+
+restoreSettings();
+loadFeedbackFields();
+renderAll();
+</script>
+<!-- CONTENT_PACK_V2_START -->
+<script id="contentPackV2">/* Eden Island Explorer content pack v2.
+   Loaded after index.html so it can extend the existing quest and badge data
+   without changing saved progress or cloud sync. */
+
+(() => {
+  const retiredQuestIds = new Set([
+    "hf12", // Build a Tiny Shelter
+    "hf13", // Treasure Sketch
+    "hf15", // Home Flag
+    "qh6",  // Island Comic
+    "qh11", // Island Menu
+    "qh12", // Secret Code
+    "qh15"  // Draw the Best House
+  ]);
+
+  // Do not delete retired quests from history. They simply stop appearing again.
+  quests.forEach(q => {
+    if (retiredQuestIds.has(q.id)) q.retired = true;
+  });
+
+  const newQuests = [
+    // MAPS AND NAVIGATION
+    {id:"map01",title:"Pokémon Region Map",text:"Place six Pokémon cards on paper as towns or landmarks. Draw roads between them and name the region.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"navigator",cooldownDays:10},
+    {id:"map02",title:"Treasure Route",text:"Draw a map from the front door to a pretend treasure inside the allowed zone. Add three landmarks and a compass arrow.",zones:["home_front","quiet_home"],support:0,time:"20 min",xp:20,cat:"navigator",cooldownDays:10},
+    {id:"map03",title:"Memory Map: Park",text:"Draw the park and nearby beach from memory before visiting. After the trip, add what you missed.",zones:["quiet_home","park_beach"],support:2,time:"25 min",xp:25,cat:"navigator",cooldownDays:14},
+    {id:"map04",title:"Animal Sighting Map",text:"Make a simple map and mark where you have seen a bird, gecko, fish, crab or insect.",zones:["home_front","home_visible","quiet_home","park_beach"],support:0,time:"20 min",xp:20,cat:"navigator",cooldownDays:10},
+    {id:"map05",title:"Buggy Route Planner",text:"Choose a safe buggy destination with an adult and draw the route with a start, finish and three turns.",zones:["quiet_home","park_beach"],support:2,time:"15 min",xp:20,cat:"navigator",cooldownDays:10},
+    {id:"map06",title:"Map Symbols Challenge",text:"Invent six map symbols for pool, beach, park, home, bridge and favourite place. Add a legend.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"navigator",cooldownDays:14},
+    {id:"map07",title:"Maze Map",text:"Draw a maze with one entrance, one exit, two dead ends and a hidden Pokémon card location.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"navigator",cooldownDays:10},
+    {id:"map08",title:"Friend's Treasure Map",text:"Hide one safe object near the house, draw a map and let a friend or adult find it.",zones:["home_front","quiet_home"],support:1,time:"20 min",xp:20,cat:"navigator",cooldownDays:14},
+    {id:"map09",title:"Pool Mission Map",text:"On paper, draw the pool and mark three supervised stations for a ring, noodle and dive toy.",zones:["home_pool","quiet_home"],support:3,time:"15 min",xp:20,cat:"navigator",cooldownDays:10},
+    {id:"map10",title:"Then and Now Map",text:"Draw the route you took today. Use one colour for the planned route and another for the real route.",zones:["quiet_home","park_beach"],support:0,time:"15 min",xp:20,cat:"navigator",cooldownDays:7},
+    {id:"map11",title:"Landmark Ranking Map",text:"Draw four nearby landmarks and rank them from easiest to hardest to find.",zones:["home_front","quiet_home"],support:0,time:"15 min",xp:15,cat:"navigator",cooldownDays:10},
+    {id:"map12",title:"Rescue Map",text:"Draw a safe rescue route for a lost toy from one place to another. Explain every step to an adult.",zones:["quiet_home","home_front"],support:1,time:"20 min",xp:20,cat:"navigator",cooldownDays:14},
+
+    // POKÉMON CARDS
+    {id:"pk01",title:"Pokémon Type Teams",text:"Choose three Pokémon types from your cards. Build one small team for each type and explain the choices.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"pokemon",cooldownDays:7},
+    {id:"pk02",title:"Highest HP Line-Up",text:"Find your ten highest-HP cards and arrange them from lowest to highest HP.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"pokemon",cooldownDays:10},
+    {id:"pk03",title:"Pokémon Alphabet Hunt",text:"Find Pokémon whose names begin with five different letters. Put them in alphabetical order.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"pokemon",cooldownDays:7},
+    {id:"pk04",title:"Dream Team of Six",text:"Choose six cards for your dream team. Give each Pokémon a role such as leader, defender, fast one or funny one.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"pokemon",cooldownDays:10},
+    {id:"pk05",title:"Pokémon Island Habitats",text:"Sort twelve cards into beach, jungle, sky and city habitats. Explain one difficult choice.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"pokemon",cooldownDays:10},
+    {id:"pk06",title:"Weakest to Strongest",text:"Choose eight cards and order them using one rule: HP, attack damage or your own strength score.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"pokemon",cooldownDays:7},
+    {id:"pk07",title:"Mystery Pokémon",text:"Choose one card secretly. Give five clues without saying its name and let an adult guess.",zones:["quiet_home"],support:1,time:"15 min",xp:15,cat:"pokemon",cooldownDays:5},
+    {id:"pk08",title:"Pokémon Card Draft",text:"Choose twelve cards, split them into three groups of four, then pick one card from each group for a mini team.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"pokemon",cooldownDays:10},
+    {id:"pk09",title:"Energy Match",text:"Find five Pokémon cards and match each one with the energy type you think fits best. Check the card symbols.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"pokemon",cooldownDays:7},
+    {id:"pk10",title:"Pokémon Number Detective",text:"Find five different numbers on Pokémon cards. Add them, compare them or arrange them from smallest to largest.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"pokemon",cooldownDays:7},
+    {id:"pk11",title:"Best Card Art Awards",text:"Choose winners for funniest art, coolest background, best colours and most surprising card.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"pokemon",cooldownDays:10},
+    {id:"pk12",title:"Pokémon Story Chain",text:"Draw three random cards. Tell a short story that includes all three Pokémon in order.",zones:["quiet_home"],support:0,time:"15 min",xp:15,cat:"pokemon",cooldownDays:5},
+    {id:"pk13",title:"Pokémon Memory Grid",text:"Study nine cards for one minute. Turn them face down and name as many as you can.",zones:["quiet_home"],support:1,time:"15 min",xp:20,cat:"pokemon",cooldownDays:7},
+    {id:"pk14",title:"Pokémon Tournament Bracket",text:"Choose eight cards, draw a tournament bracket and decide each winner using one clear rule.",zones:["quiet_home"],support:0,time:"25 min",xp:25,cat:"pokemon",cooldownDays:14},
+    {id:"pk15",title:"Same and Different",text:"Choose two Pokémon cards. Find three things that are the same and three things that are different.",zones:["quiet_home"],support:0,time:"12 min",xp:15,cat:"pokemon",cooldownDays:5},
+    {id:"pk16",title:"Pokémon Shop",text:"Choose six cards and give each a pretend price from 1 to 20 coins. Build a team that costs exactly 50 coins.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"pokemon",cooldownDays:10},
+    {id:"pk17",title:"Water Pokémon Pool Team",text:"Choose Pokémon cards that could join a pool rescue team. Give each one a job.",zones:["quiet_home","home_pool"],support:0,time:"15 min",xp:15,cat:"pokemon",cooldownDays:10},
+    {id:"pk18",title:"Pokémon Card Categories",text:"Create your own four category names and sort at least sixteen cards into them.",zones:["quiet_home"],support:0,time:"20 min",xp:20,cat:"pokemon",cooldownDays:10},
+
+    // DETECTIVE AND OBSERVATION
+    {id:"det01",title:"Perfect Circle Hunt",text:"Find five circles or nearly circular shapes around the house. Rank the best three.",zones:["home_front","home_visible"],support:0,time:"12 min",xp:15,cat:"detective",cooldownDays:7},
+    {id:"det02",title:"Hidden Letters",text:"Find outdoor objects or shapes that look like five different letters.",zones:["home_front","home_visible","park_beach"],support:0,time:"15 min",xp:15,cat:"detective",cooldownDays:7},
+    {id:"det03",title:"Reflection Detective",text:"Find three safe reflections in water, windows or shiny objects. Describe what changes in each reflection.",zones:["home_visible","park_beach"],support:1,time:"15 min",xp:15,cat:"detective",cooldownDays:7},
+    {id:"det04",title:"One Colour, Ten Things",text:"Choose one colour and find ten different things that include it.",zones:["home_front","home_visible","park_beach"],support:0,time:"12 min",xp:15,cat:"detective",cooldownDays:5},
+    {id:"det05",title:"Tiny to Huge",text:"Find five safe objects and arrange them from tiniest to biggest without moving heavy things.",zones:["home_front","home_visible"],support:0,time:"12 min",xp:15,cat:"detective",cooldownDays:7},
+    {id:"det06",title:"Symmetry Search",text:"Find four things that are symmetrical and one thing that is almost symmetrical.",zones:["home_front","home_visible","park_beach"],support:0,time:"15 min",xp:15,cat:"detective",cooldownDays:7},
+    {id:"det07",title:"What Changed?",text:"Study a small area for one minute. Turn around while an adult moves one safe item, then identify the change.",zones:["quiet_home","home_front"],support:1,time:"12 min",xp:15,cat:"detective",cooldownDays:5},
+    {id:"det08",title:"Sound Direction",text:"Close your eyes in a safe place. Identify four sounds and point to where each came from.",zones:["home_front","home_visible","park_beach"],support:1,time:"10 min",xp:15,cat:"detective",cooldownDays:7},
+    {id:"det09",title:"Number Hunt",text:"Find the numbers 1 to 10 on signs, cards, books or objects. They do not need to be in order.",zones:["quiet_home","home_front","park_beach"],support:0,time:"15 min",xp:15,cat:"detective",cooldownDays:7},
+    {id:"det10",title:"Three Clue Location",text:"Choose a nearby safe place and give an adult three clues so they can guess it.",zones:["home_front","quiet_home"],support:1,time:"12 min",xp:15,cat:"detective",cooldownDays:5},
+
+    // POOL VARIETY
+    {id:"pool11",title:"Dive Toy Sequence",text:"With an adult watching, collect dive toys in a colour or size sequence chosen before entering the water.",zones:["home_pool","public_pool"],support:3,time:"15 min",xp:20,cat:"pool",cooldownDays:5},
+    {id:"pool12",title:"Noodle Taxi",text:"Use one foam noodle to safely transport a floating toy between two supervised stations.",zones:["home_pool"],support:3,time:"15 min",xp:20,cat:"pool",cooldownDays:5},
+    {id:"pool13",title:"Ring Delivery Route",text:"Move both rings to three different pool stations without throwing them. An adult chooses the route.",zones:["home_pool"],support:3,time:"15 min",xp:20,cat:"pool",cooldownDays:7},
+    {id:"pool14",title:"Underwater Colour Hunt",text:"An adult places dive toys. Collect one requested colour at a time. No breath-holding contest.",zones:["home_pool","public_pool"],support:3,time:"15 min",xp:20,cat:"pool",cooldownDays:5},
+    {id:"pool15",title:"Pool Memory Route",text:"An adult shows a safe route around three floating objects. Repeat it from memory.",zones:["home_pool"],support:3,time:"15 min",xp:20,cat:"pool",cooldownDays:7},
+    {id:"pool16",title:"Team Rescue Roles",text:"With a friend, choose a captain and rescuer. Swap roles after rescuing three floating toys.",zones:["home_pool","public_pool"],support:3,time:"20 min",xp:25,cat:"team",friend:true,cooldownDays:7},
+    {id:"pool17",title:"Pokémon Water Gym",text:"Choose three Pokémon cards as gym leaders. Complete one safe supervised pool challenge for each card.",zones:["home_pool"],support:3,time:"20 min",xp:25,cat:"pokemon",cooldownDays:10},
+    {id:"pool18",title:"Slow Motion Swim",text:"With an adult watching, cross a short safe route as slowly and smoothly as possible three times.",zones:["home_pool","public_pool"],support:3,time:"15 min",xp:20,cat:"pool",cooldownDays:7},
+
+    // PARK, BEACH AND FRIENDS
+    {id:"park13",title:"No Children Plan B",text:"If no children are at the park, choose one: sand maze, beach map or detective hunt. Complete it with a short adult start.",zones:["park_beach"],support:2,time:"25 min",xp:20,cat:"explorer",cooldownDays:5},
+    {id:"park14",title:"Teach a Simple Game",text:"Invite another child to learn one simple game that takes less than two minutes to explain.",zones:["park_beach"],support:3,time:"20 min",xp:25,cat:"social",cooldownDays:7},
+    {id:"park15",title:"Beach Pokémon Trail",text:"Draw five Pokémon footprints or symbols in the sand and create a trail for a friend or adult to follow.",zones:["park_beach"],support:2,time:"20 min",xp:20,cat:"pokemon",cooldownDays:10},
+    {id:"park16",title:"Sand Maze Race",text:"Draw a large maze in the sand. Test it with a small toy, stone or finger and improve one dead end.",zones:["park_beach"],support:2,time:"25 min",xp:20,cat:"navigator",cooldownDays:10},
+    {id:"park17",title:"Three New Names",text:"Across different park visits, learn three children's names. One new name counts as progress today.",zones:["park_beach"],support:3,time:"20 min",xp:20,cat:"social",cooldownDays:5},
+    {id:"park18",title:"Friend Choice Challenge",text:"Let a friend choose between a map, pool or sand mission, then complete the chosen activity together.",zones:["park_beach","home_pool","quiet_home"],support:2,time:"25 min",xp:25,cat:"team",friend:true,cooldownDays:7},
+
+    // QUICK QUIET OPTIONS
+    {id:"quick01",title:"Five-Card Speed Sort",text:"Choose twenty Pokémon cards and sort them into four groups as quickly and accurately as possible.",zones:["quiet_home"],support:0,time:"10 min",xp:15,cat:"pokemon",cooldownDays:5},
+    {id:"quick02",title:"Map Puzzle for an Adult",text:"Draw a tiny map with three clues and ask an adult to identify the place.",zones:["quiet_home"],support:0,time:"12 min",xp:15,cat:"navigator",cooldownDays:5},
+    {id:"quick03",title:"Pokémon Odd One Out",text:"Make four groups of four cards. In each group, choose the odd one out and explain why.",zones:["quiet_home"],support:0,time:"12 min",xp:15,cat:"pokemon",cooldownDays:5},
+    {id:"quick04",title:"Card Number Race",text:"Find five Pokémon cards whose HP adds to the biggest total you can make in two minutes.",zones:["quiet_home"],support:0,time:"10 min",xp:15,cat:"pokemon",cooldownDays:5}
+  ];
+
+  const existingIds = new Set(quests.map(q => q.id));
+  newQuests.forEach(q => {
+    if (!existingIds.has(q.id)) quests.push(q);
+  });
+
+  // Pokémon becomes a real multi-quest badge instead of relying on one rare-card task.
+  badgeCategoryMap.pokemon = "pokemon_master";
+  const pokemonBadge = badges.find(b => b.id === "pokemon_master");
+  if (pokemonBadge) {
+    pokemonBadge.name = "Pokémon Collector";
+    pokemonBadge.need = 5;
+    pokemonBadge.description = "Complete 5 different Pokémon card missions.";
+    pokemonBadge.icon = "⚡";
+  }
+
+  const mapBadge = badges.find(b => b.id === "navigator");
+  if (mapBadge) {
+    mapBadge.name = "Cartographer";
+    mapBadge.need = 5;
+    mapBadge.description = "Complete 5 map or navigation missions.";
+  }
+
+  // Older creative quests can still appear in history, but no longer contribute
+  // fresh random options once retired.
+  const previousEligible = eligibleQuestsForCurrentSettings;
+  eligibleQuestsForCurrentSettings = function() {
+    const base = previousEligible();
+    const active = activeDate();
+    const activeTime = new Date(`${active}T12:00:00`).getTime();
+
+    return base.filter(q => {
+      if (q.retired) return false;
+
+      const lastCompletion = state.completed
+        .filter(c => c.id === q.id)
+        .map(c => new Date(`${c.date}T12:00:00`).getTime())
+        .filter(Number.isFinite)
+        .sort((a, b) => b - a)[0];
+
+      if (!lastCompletion) return true;
+      const cooldownDays = q.cooldownDays || 7;
+      const elapsedDays = Math.floor((activeTime - lastCompletion) / 86400000);
+      return elapsedDays >= cooldownDays;
+    });
+  };
+
+  // Show the refreshed names and badge counts immediately.
+  renderAll();
+})();
+</script>
+<script id="contentPackVerification">
+(() => {
+  const cartographer = badges.find(b => b.id === 'navigator');
+  const collector = badges.find(b => b.id === 'pokemon_master');
+  const loaded = cartographer?.name === 'Cartographer' && collector?.name === 'Pokémon Collector';
+  document.documentElement.dataset.contentPack = loaded ? 'v2' : 'failed';
+
+  const oldMarker = document.getElementById('contentPackStatus');
+  if (oldMarker) oldMarker.remove();
+
+  const marker = document.createElement('p');
+  marker.id = 'contentPackStatus';
+  marker.style.marginTop = '6px';
+  marker.style.fontSize = '12px';
+  marker.style.opacity = '.88';
+  marker.textContent = loaded ? 'Content Pack v2 active' : 'Content Pack v2 failed';
+  document.querySelector('header')?.appendChild(marker);
+
+  if (!loaded) {
+    const note = document.createElement('div');
+    note.className = 'safety danger';
+    note.style.margin = '12px 14px';
+    note.innerHTML = '<b>Content update did not load.</b> Cartographer or Pokémon Collector is missing.';
+    document.body.prepend(note);
+  }
+})();
+</script>
+<!-- CONTENT_PACK_V2_END -->
 </body>
 </html>
