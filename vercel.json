@@ -1,13 +1,11 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/api/app" },
-    { "source": "/app.html", "destination": "/api/app" }
-  ],
+  "buildCommand": "node build.cjs",
+  "outputDirectory": "dist",
   "headers": [
     {
-      "source": "/content-update.js",
+      "source": "/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }
       ]
     }
   ]
