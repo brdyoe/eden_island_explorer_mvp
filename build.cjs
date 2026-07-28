@@ -2,19 +2,33 @@ const fs = require('fs');
 const path = require('path');
 
 const root = __dirname;
-const dist = path.join(root, 'dist');
 const indexPath = path.join(root, 'index.html');
+const appPath = path.join(root, 'app.html');
 const packPath = path.join(root, 'content-update.js');
+
+const START = '<!-- CONTENT_PACK_V2_START -->';
+const END = '<!-- CONTENT_PACK_V2_END -->';
 
 function fail(message) {
   console.error(message);
   process.exit(1);
 }
 
+function removeExistingPack(html) {
+  let output = html;
+  while (true) {
+    const start = output.indexOf(START);
+    if (start === -1) return output;
+    const end = output.indexOf(END, start);
+    if (end === -1) fail('Found content-pack start marker without end marker');
+    output = output.slice(0, start) + output.slice(end + END.length);
+  }
+}
+
 if (!fs.existsSync(indexPath)) fail('index.html not found');
 if (!fs.existsSync(packPath)) fail('content-update.js not found');
 
-let html = fs.readFileSync(indexPath, 'utf8');
+let html = removeExistingPack(fs.readFileSync(indexPath, 'utf8'));
 const pack = fs.readFileSync(packPath, 'utf8').replace(/<\/script/gi, '<\\/script');
 
 if (!html.includes('</body>')) fail('index.html has no closing body tag');
@@ -29,6 +43,9 @@ const verification = `
   const collector = badges.find(b => b.id === 'pokemon_master');
   const loaded = cartographer?.name === 'Cartographer' && collector?.name === 'Pokémon Collector';
   document.documentElement.dataset.contentPack = loaded ? 'v2' : 'failed';
+
+  const oldMarker = document.getElementById('contentPackStatus');
+  if (oldMarker) oldMarker.remove();
 
   const marker = document.createElement('p');
   marker.id = 'contentPackStatus';
@@ -48,13 +65,10 @@ const verification = `
 })();
 <\/script>`;
 
-const injected = `<script id="contentPackV2">${pack}<\/script>${verification}`;
-html = html.replace('</body>', `${injected}</body>`);
+const block = `${START}\n<script id="contentPackV2">${pack}<\/script>${verification}\n${END}\n`;
+html = html.replace('</body>', `${block}</body>`);
 
-fs.rmSync(dist, { recursive: true, force: true });
-fs.mkdirSync(dist, { recursive: true });
-fs.writeFileSync(path.join(dist, 'index.html'), html, 'utf8');
-fs.writeFileSync(path.join(dist, 'app.html'), html, 'utf8');
-fs.copyFileSync(packPath, path.join(dist, 'content-update.js'));
+fs.writeFileSync(indexPath, html, 'utf8');
+fs.writeFileSync(appPath, html, 'utf8');
 
-console.log('Built dist/index.html with Content Pack v2 embedded.');
+console.log('Updated root index.html and app.html with Content Pack v2 embedded.');
