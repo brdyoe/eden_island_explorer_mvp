@@ -14,29 +14,36 @@
   <script>
     (async () => {
       try {
-        const response = await fetch('/index.html?base=20260728', {cache: 'no-store'});
-        if (!response.ok) throw new Error(`Base app returned ${response.status}`);
-        let html = await response.text();
-        const loader = `
-          <script src="/content-update.js?v=20260728-2"><\/script>
-          <script>
-            try {
-              const cartographer = badges.find(b => b.id === 'navigator');
-              const loaded = cartographer && cartographer.name === 'Cartographer';
-              document.documentElement.dataset.contentPack = loaded ? 'v2' : 'failed';
-              if (!loaded) {
-                const note = document.createElement('div');
-                note.className = 'safety danger';
-                note.style.margin = '12px 14px';
-                note.innerHTML = '<b>Content update did not load.</b> Please report this screen.';
-                document.body.prepend(note);
-              }
-            } catch (error) {
-              console.error('Content pack verification failed', error);
+        const [baseResponse, packResponse] = await Promise.all([
+          fetch('/index.html?base=20260728-3', {cache: 'no-store'}),
+          fetch('/content-update.js?pack=20260728-3', {cache: 'no-store'})
+        ]);
+        if (!baseResponse.ok) throw new Error(`Base app returned ${baseResponse.status}`);
+        if (!packResponse.ok) throw new Error(`Content pack returned ${packResponse.status}`);
+
+        let html = await baseResponse.text();
+        const packSource = (await packResponse.text()).replace(/<\/script/gi, '<\\/script');
+        const verificationSource = `
+          try {
+            const cartographer = badges.find(b => b.id === 'navigator');
+            const collector = badges.find(b => b.id === 'pokemon_master');
+            const loaded = cartographer?.name === 'Cartographer' && collector?.name === 'Pokémon Collector';
+            document.documentElement.dataset.contentPack = loaded ? 'v2' : 'failed';
+            if (!loaded) {
+              const note = document.createElement('div');
+              note.className = 'safety danger';
+              note.style.margin = '12px 14px';
+              note.innerHTML = '<b>Content update did not load.</b> Cartographer or Pokémon Collector is missing.';
+              document.body.prepend(note);
             }
-          <\/script>`;
+          } catch (error) {
+            console.error('Content pack verification failed', error);
+          }
+        `;
+        const inlinePack = `<script id="contentPackV2">${packSource}<\/script><script>${verificationSource}<\/script>`;
+
         if (!html.includes('</body>')) throw new Error('Base app HTML has no closing body tag');
-        html = html.replace('</body>', `${loader}</body>`);
+        html = html.replace('</body>', `${inlinePack}</body>`);
         document.open();
         document.write(html);
         document.close();
